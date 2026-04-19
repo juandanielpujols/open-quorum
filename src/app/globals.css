@@ -1,18 +1,59 @@
 @import "tailwindcss";
 
 @theme {
-  --color-sb-azul: #0d3048;
-  --color-sb-gris: #5c7f91;
+  /* Brand palette — CGR defaults (navy + crimson) */
+  --color-brand-navy: #1E3A5F;
+  --color-brand-navy-deep: #0F1F3A;
+  --color-brand-navy-soft: #2C4D73;
+  --color-brand-crimson: #C62828;
+  --color-brand-crimson-deep: #8F1F1F;
+  --color-brand-cream: #F8F6F1;
+  --color-brand-cream-deep: #F0EBDF;
+  --color-brand-paper: #FFFFFF;
+  --color-brand-ink: #0F1F3A;
+  --color-brand-body: #334155;
+  --color-brand-muted: #64748B;
+  --color-brand-border: #E5E1D8;
+
+  /* Legacy sb-* retenido temporalmente (remapeado a los nuevos brand tokens) */
+  --color-sb-azul: #1E3A5F;
+  --color-sb-gris: #64748B;
   --color-sb-verde: #12C69F;
-  --color-sb-terracota: #D6490F;
-  --color-sb-rojo: #C13410;
-  --color-sb-petroleo: #47738C;
+  --color-sb-terracota: #C62828;
+  --color-sb-rojo: #8F1F1F;
+  --color-sb-petroleo: #2C4D73;
   --color-sb-claro: #5A97B3;
-  --color-sb-gris-fondo: #e1e7eb;
-  --color-sb-fondo-claro: #f0f3f5;
+  --color-sb-gris-fondo: #E5E1D8;
+  --color-sb-fondo-claro: #F8F6F1;
+
+  --font-display: "Crimson Pro", Georgia, serif;
+  --font-sans: "Atkinson Hyperlegible", Inter, system-ui, sans-serif;
 }
 
 body {
-  background: var(--color-sb-fondo-claro);
-  color: var(--color-sb-azul);
+  background: var(--color-brand-cream);
+  color: var(--color-brand-body);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02";
+}
+
+/* Sutil grano en superficies principales — opcional, le da textura institucional */
+.brand-grain {
+  background-image:
+    radial-gradient(rgba(15, 31, 58, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(15, 31, 58, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px, 16px 16px;
+  background-position: 0 0, 12px 8px;
+}
+
+@keyframes cgr-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cgr-reveal {
+  animation: cgr-reveal 600ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cgr-reveal { animation: none; }
 }
