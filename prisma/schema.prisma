@@ -73,6 +73,8 @@ model User {
   tokenRecuperacionExpira DateTime?
   intentosFallidos       Int       @default(0)
   bloqueadoHasta         DateTime?
+  totpSecret             String?   // encriptado at-rest en fase futura; null = 2FA desactivado
+  totpHabilitado         Boolean   @default(false)
   creadoPor         String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
