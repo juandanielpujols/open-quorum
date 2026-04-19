@@ -3,6 +3,7 @@ export type BusEvent =
   | { tipo: "pregunta:cerrada"; preguntaId: string; eventoId: string }
   | { tipo: "pregunta:revelada"; preguntaId: string; eventoId: string }
   | { tipo: "voto:registrado"; preguntaId: string; eventoId: string; total: number }
+  | { tipo: "evento:finalizado"; eventoId: string }
   | { tipo: "snapshot"; payload: unknown };
 
 type Subscriber = (e: BusEvent) => void;

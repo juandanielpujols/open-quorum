@@ -94,6 +94,7 @@ model Evento {
   inicioAt           DateTime?
   cierreAt           DateTime?
   maxPoderesPorProxy Int?
+  mostrarResultadosFinales Boolean @default(true)
   creadoPor          String
   creador            User     @relation("EventoCreador", fields: [creadoPor], references: [id])
   preguntas          Pregunta[]

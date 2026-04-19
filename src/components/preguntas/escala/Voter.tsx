@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { ConfigEscala } from "./Schema";
+import { Check } from "lucide-react";
 
 type Props = { config: ConfigEscala; onSubmit: (valor: number) => Promise<void> };
 
@@ -22,21 +23,29 @@ export function VoterEscala({ config, onSubmit }: Props) {
   }
 
   if (done)
-    return <p className="text-center py-8 text-sb-verde">✓ Tu voto fue registrado</p>;
+    return (
+      <p className="flex items-center justify-center gap-2 rounded-lg bg-brand-success/10 py-6 text-center font-medium text-brand-success-deep">
+        <Check aria-hidden className="size-5" />
+        Tu voto fue registrado
+      </p>
+    );
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between text-sm text-sb-gris">
+      <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-brand-muted">
         <span>{config.etiquetaMin}</span>
         <span>{config.etiquetaMax}</span>
       </div>
-      <div className="grid grid-flow-col auto-cols-fr gap-2">
+      <div className="grid auto-cols-fr grid-flow-col gap-2">
         {valores.map((v) => (
           <button
             key={v}
+            type="button"
             onClick={() => setSel(v)}
-            className={`rounded-xl p-4 text-xl font-semibold border ${
-              sel === v ? "border-sb-azul bg-sb-azul text-white" : "border-gray-200 bg-white"
+            className={`rounded-xl border-2 p-4 text-xl font-semibold transition-all active:scale-[0.97] ${
+              sel === v
+                ? "border-brand-navy bg-brand-navy text-white shadow-sm"
+                : "border-brand-border bg-brand-paper text-brand-ink hover:border-brand-navy/40"
             }`}
           >
             {v}
@@ -44,9 +53,10 @@ export function VoterEscala({ config, onSubmit }: Props) {
         ))}
       </div>
       <button
+        type="button"
         disabled={sel === null || sending}
         onClick={submit}
-        className="w-full bg-sb-azul text-white rounded-lg p-3 disabled:opacity-50"
+        className="w-full rounded-lg bg-brand-navy p-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {sending ? "Enviando..." : "Enviar voto"}
       </button>

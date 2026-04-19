@@ -50,7 +50,7 @@ function ActivarForm() {
       <button
         disabled={loading}
         type="submit"
-        className="w-full bg-sb-azul text-white rounded-lg p-2 disabled:opacity-50"
+        className="w-full bg-brand-navy text-white rounded-lg p-2 disabled:opacity-50"
       >
         {loading ? "Activando..." : "Activar"}
       </button>
@@ -62,7 +62,7 @@ export default function ActivarPage() {
   return (
     <main className="max-w-sm mx-auto p-6">
       <h1 className="text-2xl font-semibold mb-4">Activa tu cuenta</h1>
-      <Suspense fallback={<p className="text-sb-gris text-sm">Cargando...</p>}>
+      <Suspense fallback={<p className="text-brand-muted text-sm">Cargando...</p>}>
         <ActivarForm />
       </Suspense>
     </main>

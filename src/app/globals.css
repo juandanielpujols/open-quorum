@@ -18,6 +18,11 @@
   --color-brand-body: var(--brand-body);
   --color-brand-muted: var(--brand-muted);
   --color-brand-border: var(--brand-border);
+  --color-brand-success: var(--brand-success);
+  --color-brand-success-deep: var(--brand-success-deep);
+  --color-brand-danger: var(--brand-danger);
+  --color-brand-danger-deep: var(--brand-danger-deep);
+  --color-brand-accent: var(--brand-accent);
 
   --font-display: "Crimson Pro", Georgia, serif;
   --font-sans: "Atkinson Hyperlegible", Inter, system-ui, sans-serif;
@@ -40,6 +45,11 @@
   --brand-body: #334155;
   --brand-muted: #64748B;
   --brand-border: #E5E1D8;
+  --brand-success: #0F766E;
+  --brand-success-deep: #115E59;
+  --brand-danger: #B91C1C;
+  --brand-danger-deep: #7F1D1D;
+  --brand-accent: #B45309;
 }
 
 /* Tema esmeralda — verde profundo + ámbar */
@@ -56,6 +66,11 @@
   --brand-body: #3A4A3F;
   --brand-muted: #6E7A70;
   --brand-border: #E5DCC5;
+  --brand-success: #15803D;
+  --brand-success-deep: #166534;
+  --brand-danger: #B45309;
+  --brand-danger-deep: #78350F;
+  --brand-accent: #C2410C;
 }
 
 /* Tema carbón — grafito + teal */
@@ -72,6 +87,11 @@
   --brand-body: #334155;
   --brand-muted: #6B7280;
   --brand-border: #DFDDD0;
+  --brand-success: #0D9488;
+  --brand-success-deep: #115E59;
+  --brand-danger: #DC2626;
+  --brand-danger-deep: #991B1B;
+  --brand-accent: #0891B2;
 }
 
 body {

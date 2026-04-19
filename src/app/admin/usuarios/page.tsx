@@ -46,18 +46,18 @@ export default async function UsuariosPage() {
             <option value="REVIEWER">Reviewer</option>
             <option value="ADMIN">Admin</option>
           </select>
-          <button className="bg-sb-azul text-white rounded-lg p-2 sm:col-span-4">
+          <button className="bg-brand-navy text-white rounded-lg p-2 sm:col-span-4">
             Crear + generar link de activación
           </button>
         </form>
-        <p className="text-xs text-sb-gris mt-2">
+        <p className="text-xs text-brand-muted mt-2">
           Tras crear, copia el link de activación desde la tabla y compártelo
           con la persona. (Envío por email en Fase 2.)
         </p>
       </section>
 
       <table className="w-full text-sm border-collapse bg-white rounded-xl overflow-hidden">
-        <thead className="text-left text-sb-gris bg-brand-border">
+        <thead className="text-left text-brand-muted bg-brand-border">
           <tr>
             <th className="p-2">Email</th>
             <th className="p-2">Nombre</th>
@@ -73,7 +73,7 @@ export default async function UsuariosPage() {
               <td className="p-2">{u.rol}</td>
               <td className="p-2">
                 {u.activado ? (
-                  <span className="text-sb-verde">✓ Activado</span>
+                  <span className="text-brand-success">✓ Activado</span>
                 ) : (
                   <code className="text-xs bg-brand-cream px-1.5 py-0.5 rounded">
                     /activar?t={u.tokenActivacion}

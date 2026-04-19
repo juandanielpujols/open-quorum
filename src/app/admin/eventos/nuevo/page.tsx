@@ -1,26 +1,26 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { crearEvento } from "@/server/eventos";
+import { listarTags } from "@/server/tags";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { ArrowLeft, Plus } from "lucide-react";
-
-const fieldCls =
-  "h-10 w-full rounded-md border border-brand-border bg-brand-paper px-3 text-sm text-brand-ink placeholder:text-brand-muted/70 shadow-none transition-[border-color,box-shadow] duration-150 ease-out focus-visible:border-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy/15";
-
-const labelCls =
-  "text-[11px] font-bold uppercase tracking-[0.12em] text-brand-muted";
+import { ArrowLeft } from "lucide-react";
+import { CrearEventoForm } from "./CrearEventoForm";
 
 export default async function NuevoEventoPage() {
+  const tags = await listarTags();
+
   async function onCrear(fd: FormData) {
     "use server";
     const session = await auth();
     if (!session) throw new Error("auth");
     const modo = String(fd.get("modo")) as "VIVO" | "ASINCRONO";
+    const maxPoderesRaw = fd.get("maxPoderes");
+    const maxPoderes =
+      maxPoderesRaw === null || maxPoderesRaw === ""
+        ? undefined
+        : Number(maxPoderesRaw);
+    const tagIds = fd.getAll("tagIds").map(String).filter(Boolean);
     const evento = await crearEvento({
       nombre: String(fd.get("nombre")),
       descripcion: String(fd.get("descripcion") ?? "") || undefined,
@@ -29,7 +29,9 @@ export default async function NuevoEventoPage() {
         modo === "ASINCRONO" ? new Date(String(fd.get("inicioAt"))) : undefined,
       cierreAt:
         modo === "ASINCRONO" ? new Date(String(fd.get("cierreAt"))) : undefined,
-      maxPoderesPorProxy: Number(fd.get("maxPoderes")) || undefined,
+      maxPoderesPorProxy: Number.isFinite(maxPoderes) ? maxPoderes : undefined,
+      mostrarResultadosFinales: fd.get("mostrarResultadosFinales") === "on",
+      tagIds: tagIds.length > 0 ? tagIds : undefined,
       creadoPor: session.user.id,
     });
     redirect(`/admin/eventos/${evento.id}`);
@@ -63,99 +65,7 @@ export default async function NuevoEventoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={onCrear} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="nombre" className={labelCls}>
-                Nombre del evento
-              </Label>
-              <Input
-                id="nombre"
-                name="nombre"
-                required
-                placeholder="Ej: Asamblea Anual 2026"
-                className={fieldCls}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="descripcion" className={labelCls}>
-                Descripción (opcional)
-              </Label>
-              <textarea
-                id="descripcion"
-                name="descripcion"
-                rows={3}
-                placeholder="Contexto del evento, agenda, etc."
-                className={cn(fieldCls, "h-auto py-2")}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="modo" className={labelCls}>
-                Modo
-              </Label>
-              <select id="modo" name="modo" className={fieldCls}>
-                <option value="VIVO">En vivo (asamblea presencial o remota)</option>
-                <option value="ASINCRONO">Asíncrono (ventana de días)</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="inicioAt" className={labelCls}>
-                  Inicio (solo asíncrono)
-                </Label>
-                <Input
-                  id="inicioAt"
-                  type="datetime-local"
-                  name="inicioAt"
-                  className={fieldCls}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cierreAt" className={labelCls}>
-                  Cierre (solo asíncrono)
-                </Label>
-                <Input
-                  id="cierreAt"
-                  type="datetime-local"
-                  name="cierreAt"
-                  className={fieldCls}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="maxPoderes" className={labelCls}>
-                Máx. poderes por representante (opcional)
-              </Label>
-              <Input
-                id="maxPoderes"
-                type="number"
-                name="maxPoderes"
-                min={1}
-                placeholder="Sin límite"
-                className={fieldCls}
-              />
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <Button
-                type="submit"
-                className="bg-brand-navy text-white hover:bg-brand-navy-deep"
-              >
-                <Plus aria-hidden className="size-4" />
-                Crear evento
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-brand-border text-brand-body hover:bg-brand-cream"
-              >
-                <Link href="/admin/eventos">Cancelar</Link>
-              </Button>
-            </div>
-          </form>
+          <CrearEventoForm tags={tags} onCrear={onCrear} />
         </CardContent>
       </Card>
     </div>

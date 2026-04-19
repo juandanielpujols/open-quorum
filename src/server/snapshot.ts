@@ -50,6 +50,7 @@ export async function obtenerSnapshotEvento(eventoId: string) {
     nombre: evento.nombre,
     estado: evento.estado,
     modo: evento.modo,
+    mostrarResultadosFinales: evento.mostrarResultadosFinales,
     totalInvitados: evento._count.invitados,
     preguntas,
   };

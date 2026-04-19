@@ -1,23 +1,40 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import type { SnapshotEvento } from "@/server/snapshot";
+import { useRouter } from "next/navigation";
+import type { SnapshotEvento, SnapshotPregunta } from "@/server/snapshot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  CheckCheck,
+  CheckSquare,
   Eye,
   EyeOff,
+  FastForward,
+  Loader2,
   MonitorPlay,
   Play,
   Square,
-  CheckCheck,
   Users,
 } from "lucide-react";
 
 const TIPO_LABEL: Record<string, string> = {
   OPCION_MULTIPLE: "Opción múltiple",
   SI_NO: "Sí / No",
-  ESCALA: "Escala 1–5",
+  ESCALA: "Escala",
+  RANKING: "Ranking",
+  NUBE_PALABRAS: "Nube de palabras",
+  RESPUESTA_ABIERTA: "Respuesta abierta",
 };
 
 const ESTADO_STYLE: Record<string, string> = {
@@ -34,7 +51,12 @@ export function ControlClient({
   initial: SnapshotEvento;
   eventoId: string;
 }) {
+  const router = useRouter();
   const [snap, setSnap] = useState<SnapshotEvento>(initial);
+  const [pendingAccion, setPendingAccion] = useState<string | null>(null);
+  const [confirmAbrir, setConfirmAbrir] = useState<SnapshotPregunta | null>(null);
+  const [confirmFinalizar, setConfirmFinalizar] = useState(false);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const es = new EventSource(`/api/eventos/${eventoId}/stream`);
@@ -46,10 +68,60 @@ export function ControlClient({
   }, [eventoId]);
 
   async function accion(preguntaId: string, tipo: "abrir" | "cerrar" | "revelar") {
-    await fetch(`/api/admin/preguntas/${preguntaId}/${tipo}`, { method: "POST" });
+    setPendingAccion(`${tipo}:${preguntaId}`);
+    try {
+      await fetch(`/api/admin/preguntas/${preguntaId}/${tipo}`, { method: "POST" });
+    } finally {
+      setPendingAccion(null);
+    }
+  }
+
+  async function cerrarYAbrir(cerrarId: string, abrirId: string) {
+    setPendingAccion(`avanzar:${abrirId}`);
+    try {
+      await fetch(`/api/admin/preguntas/${cerrarId}/cerrar`, { method: "POST" });
+      await fetch(`/api/admin/preguntas/${abrirId}/abrir`, { method: "POST" });
+    } finally {
+      setPendingAccion(null);
+    }
+  }
+
+  async function finalizarEvento() {
+    setPendingAccion("finalizar");
+    try {
+      await fetch(`/api/admin/eventos/${eventoId}/finalizar`, { method: "POST" });
+      setConfirmFinalizar(false);
+      startTransition(() => router.refresh());
+    } finally {
+      setPendingAccion(null);
+    }
   }
 
   const totalInvitados = snap.totalInvitados ?? 0;
+
+  const abierta = useMemo(
+    () => snap.preguntas.find((p) => p.estado === "ABIERTA"),
+    [snap.preguntas],
+  );
+
+  const proxima = useMemo(
+    () =>
+      abierta
+        ? snap.preguntas.find((p) => p.estado === "BORRADOR" && p.orden > abierta.orden)
+        : snap.preguntas.find((p) => p.estado === "BORRADOR"),
+    [snap.preguntas, abierta],
+  );
+
+  const preguntasCerrables = snap.preguntas.some((p) => p.estado === "BORRADOR");
+  const puedeFinalizar = snap.estado !== "FINALIZADO" && !preguntasCerrables;
+
+  function clickAbrir(p: SnapshotPregunta) {
+    if (abierta && abierta.id !== p.id) {
+      setConfirmAbrir(p);
+      return;
+    }
+    accion(p.id, "abrir");
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 lg:px-8 lg:py-10">
@@ -77,16 +149,76 @@ export function ControlClient({
             {totalInvitados} invitado{totalInvitados === 1 ? "" : "s"} en este evento
           </p>
         </div>
-        <Button
-          asChild
-          className="bg-brand-navy text-white hover:bg-brand-navy-deep"
-        >
+        <Button asChild className="bg-brand-navy text-white hover:bg-brand-navy-deep">
           <Link href={`/proyectar/${eventoId}`} target="_blank" rel="noopener">
             <MonitorPlay aria-hidden className="size-4" />
             Abrir proyector
           </Link>
         </Button>
       </header>
+
+      {/* Barra de acciones rápidas */}
+      {(abierta || proxima || puedeFinalizar) && (
+        <div className="sticky top-0 z-10 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-border bg-brand-paper/95 px-4 py-3 shadow-sm backdrop-blur">
+          <div className="min-w-0 text-xs text-brand-muted">
+            {abierta ? (
+              <span>
+                Pregunta activa:{" "}
+                <span className="font-medium text-brand-ink">
+                  {abierta.enunciado}
+                </span>
+              </span>
+            ) : proxima ? (
+              <span>Lista para abrir la próxima pregunta.</span>
+            ) : puedeFinalizar ? (
+              <span>Todas las preguntas gestionadas. Listo para finalizar.</span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {abierta && proxima && (
+              <Button
+                size="sm"
+                disabled={pendingAccion === `avanzar:${proxima.id}`}
+                onClick={() => cerrarYAbrir(abierta.id, proxima.id)}
+                className="bg-brand-navy text-white hover:bg-brand-navy-deep"
+              >
+                {pendingAccion === `avanzar:${proxima.id}` ? (
+                  <Loader2 aria-hidden className="size-3.5 animate-spin" />
+                ) : (
+                  <FastForward aria-hidden className="size-3.5" />
+                )}
+                Avanzar a próxima pregunta
+              </Button>
+            )}
+            {!abierta && proxima && (
+              <Button
+                size="sm"
+                disabled={pendingAccion === `abrir:${proxima.id}`}
+                onClick={() => accion(proxima.id, "abrir")}
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
+              >
+                {pendingAccion === `abrir:${proxima.id}` ? (
+                  <Loader2 aria-hidden className="size-3.5 animate-spin" />
+                ) : (
+                  <Play aria-hidden className="size-3.5" />
+                )}
+                Abrir próxima
+              </Button>
+            )}
+            {puedeFinalizar && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setConfirmFinalizar(true)}
+                className="border-brand-crimson/40 text-brand-crimson hover:bg-brand-crimson/10 hover:text-brand-crimson-deep"
+              >
+                <CheckSquare aria-hidden className="size-3.5" />
+                Finalizar ejercicio
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
 
       <ul className="space-y-3">
         {snap.preguntas.map((p) => {
@@ -162,10 +294,15 @@ export function ControlClient({
                     {p.estado === "BORRADOR" && (
                       <Button
                         size="sm"
-                        onClick={() => accion(p.id, "abrir")}
+                        onClick={() => clickAbrir(p)}
+                        disabled={pendingAccion !== null}
                         className="bg-emerald-600 text-white hover:bg-emerald-700"
                       >
-                        <Play aria-hidden className="size-3.5" />
+                        {pendingAccion === `abrir:${p.id}` ? (
+                          <Loader2 aria-hidden className="size-3.5 animate-spin" />
+                        ) : (
+                          <Play aria-hidden className="size-3.5" />
+                        )}
                         Abrir
                       </Button>
                     )}
@@ -173,9 +310,14 @@ export function ControlClient({
                       <Button
                         size="sm"
                         onClick={() => accion(p.id, "cerrar")}
+                        disabled={pendingAccion !== null}
                         className="bg-brand-crimson text-white hover:bg-brand-crimson-deep"
                       >
-                        <Square aria-hidden className="size-3.5" />
+                        {pendingAccion === `cerrar:${p.id}` ? (
+                          <Loader2 aria-hidden className="size-3.5 animate-spin" />
+                        ) : (
+                          <Square aria-hidden className="size-3.5" />
+                        )}
                         Cerrar
                       </Button>
                     )}
@@ -183,9 +325,14 @@ export function ControlClient({
                       <Button
                         size="sm"
                         onClick={() => accion(p.id, "revelar")}
+                        disabled={pendingAccion !== null}
                         className="bg-brand-navy text-white hover:bg-brand-navy-deep"
                       >
-                        <CheckCheck aria-hidden className="size-3.5" />
+                        {pendingAccion === `revelar:${p.id}` ? (
+                          <Loader2 aria-hidden className="size-3.5 animate-spin" />
+                        ) : (
+                          <CheckCheck aria-hidden className="size-3.5" />
+                        )}
                         Revelar
                       </Button>
                     )}
@@ -196,6 +343,80 @@ export function ControlClient({
           );
         })}
       </ul>
+
+      {/* Diálogo: confirmación de abrir cuando hay otra abierta */}
+      <AlertDialog
+        open={confirmAbrir !== null}
+        onOpenChange={(open) => !open && setConfirmAbrir(null)}
+      >
+        <AlertDialogContent className="border-brand-border bg-brand-paper">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl text-brand-ink">
+              ¿Cerrar la pregunta actual?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-brand-body">
+              Hay otra pregunta abierta. Solo puede haber una pregunta activa a la vez.
+              Se cerrará la actual y se abrirá la nueva.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-brand-border text-brand-body hover:bg-brand-cream">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!abierta || !confirmAbrir) return;
+                await cerrarYAbrir(abierta.id, confirmAbrir.id);
+                setConfirmAbrir(null);
+              }}
+              className="bg-brand-navy text-white hover:bg-brand-navy-deep"
+            >
+              Sí, avanzar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo: finalizar ejercicio */}
+      <AlertDialog open={confirmFinalizar} onOpenChange={setConfirmFinalizar}>
+        <AlertDialogContent className="border-brand-border bg-brand-paper">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-xl text-brand-ink">
+              ¿Finalizar el ejercicio?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-brand-body">
+              El proyector y los votantes verán una pantalla de agradecimiento.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={pendingAccion === "finalizar"}
+              className="border-brand-border text-brand-body hover:bg-brand-cream"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pendingAccion === "finalizar"}
+              onClick={(e) => {
+                e.preventDefault();
+                finalizarEvento();
+              }}
+              className="bg-brand-crimson text-white hover:bg-brand-crimson-deep"
+            >
+              {pendingAccion === "finalizar" ? (
+                <>
+                  <Loader2 aria-hidden className="size-4 animate-spin" />
+                  Finalizando...
+                </>
+              ) : (
+                <>Sí, finalizar</>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

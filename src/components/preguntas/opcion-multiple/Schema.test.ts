@@ -4,7 +4,7 @@ import { ConfigOpcionMultiple, RespuestaOpcionMultiple } from "./Schema";
 describe("OpcionMultiple schemas", () => {
   it("config default: single choice", () => {
     const parsed = ConfigOpcionMultiple.parse({});
-    expect(parsed).toEqual({ permitirMultiple: false, maxSelecciones: 1 });
+    expect(parsed).toEqual({ permitirMultiple: false, maxSelecciones: 1, chartTipo: "BARRAS_H" });
   });
   it("respuesta requiere al menos 1 opcionId", () => {
     expect(() => RespuestaOpcionMultiple.parse({ opcionIds: [] })).toThrow();

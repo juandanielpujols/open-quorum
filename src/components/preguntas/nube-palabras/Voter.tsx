@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { ConfigNubePalabras } from "./Schema";
 
 type Props = {
@@ -39,7 +39,12 @@ export function VoterNubePalabras({ config, onSubmit }: Props) {
   }
 
   if (done)
-    return <p className="text-center py-8 text-sb-verde">✓ Tus palabras fueron registradas</p>;
+    return (
+      <p className="flex items-center justify-center gap-2 rounded-lg bg-brand-success/10 py-6 text-center font-medium text-brand-success-deep">
+        <Check aria-hidden className="size-5" />
+        Tus palabras fueron registradas
+      </p>
+    );
 
   const puedeAgregar = palabras.length < config.palabrasPorVotante;
 
@@ -97,9 +102,10 @@ export function VoterNubePalabras({ config, onSubmit }: Props) {
       )}
 
       <button
+        type="button"
         onClick={submit}
         disabled={palabras.length === 0 || sending}
-        className="w-full rounded-lg bg-brand-navy p-3 text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-brand-navy p-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {sending ? "Enviando..." : `Enviar ${palabras.length || ""}`}
       </button>

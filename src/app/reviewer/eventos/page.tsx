@@ -11,10 +11,10 @@ export default async function ReviewerEventos() {
       <ul className="space-y-2">
         {eventos.map((e) => (
           <li key={e.id} className="bg-white rounded-lg border border-gray-100 p-4">
-            <Link href={`/reviewer/eventos/${e.id}`} className="font-medium text-sb-azul">
+            <Link href={`/reviewer/eventos/${e.id}`} className="font-medium text-brand-navy">
               {e.nombre}
             </Link>
-            <p className="text-xs text-sb-gris">
+            <p className="text-xs text-brand-muted">
               {e.modo} · {e.estado}
             </p>
           </li>

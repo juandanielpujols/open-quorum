@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Check } from "lucide-react";
 import type { ConfigRespuestaAbierta } from "./Schema";
 
 type Props = {
@@ -22,7 +23,12 @@ export function VoterRespuestaAbierta({ config, onSubmit }: Props) {
   }
 
   if (done)
-    return <p className="text-center py-8 text-sb-verde">✓ Tu respuesta fue registrada</p>;
+    return (
+      <p className="flex items-center justify-center gap-2 rounded-lg bg-brand-success/10 py-6 text-center font-medium text-brand-success-deep">
+        <Check aria-hidden className="size-5" />
+        Tu respuesta fue registrada
+      </p>
+    );
 
   const restantes = config.maxCaracteres - texto.length;
 
@@ -41,9 +47,10 @@ export function VoterRespuestaAbierta({ config, onSubmit }: Props) {
         <span className={restantes < 50 ? "text-brand-crimson" : ""}>{restantes}</span>
       </div>
       <button
+        type="button"
         onClick={submit}
         disabled={!texto.trim() || sending}
-        className="w-full rounded-lg bg-brand-navy p-3 text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-brand-navy p-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {sending ? "Enviando..." : "Enviar respuesta"}
       </button>

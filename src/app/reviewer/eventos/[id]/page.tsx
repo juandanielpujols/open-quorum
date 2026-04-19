@@ -21,7 +21,7 @@ export default async function ReviewerEventoDetalle({
               <p className="font-medium">
                 {p.orden + 1}. {p.enunciado}
               </p>
-              <span className="text-xs text-sb-gris">
+              <span className="text-xs text-brand-muted">
                 {p.tipo} · {p.estado} · {p.totalVotos} votos
               </span>
             </div>

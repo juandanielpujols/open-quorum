@@ -17,7 +17,7 @@ export default async function EventosVotante() {
     <div className="p-6 max-w-2xl">
       <h1 className="text-2xl font-semibold mb-4">Mis votaciones</h1>
       {activos.length === 0 && (
-        <p className="text-sb-gris">No tienes votaciones activas.</p>
+        <p className="text-brand-muted">No tienes votaciones activas.</p>
       )}
       <ul className="space-y-2">
         {activos.map((i) => (
@@ -26,8 +26,8 @@ export default async function EventosVotante() {
               href={`/votante/votar/${i.eventoId}`}
               className="block bg-white rounded-xl border border-gray-100 p-4 hover:bg-brand-cream"
             >
-              <p className="font-medium text-sb-azul">{i.evento.nombre}</p>
-              <p className="text-xs text-sb-gris">{i.evento.modo}</p>
+              <p className="font-medium text-brand-navy">{i.evento.nombre}</p>
+              <p className="text-xs text-brand-muted">{i.evento.modo}</p>
             </Link>
           </li>
         ))}

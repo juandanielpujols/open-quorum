@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { eventBus, canalEvento } from "@/lib/eventbus";
 
 const crearSchema = z
   .object({
@@ -8,7 +9,8 @@ const crearSchema = z
     modo: z.enum(["VIVO", "ASINCRONO"]),
     inicioAt: z.coerce.date().optional(),
     cierreAt: z.coerce.date().optional(),
-    maxPoderesPorProxy: z.number().int().positive().optional(),
+    maxPoderesPorProxy: z.number().int().min(0).optional(),
+    mostrarResultadosFinales: z.boolean().optional(),
     creadoPor: z.string(),
     tagIds: z.array(z.string()).optional(),
   })
@@ -69,7 +71,19 @@ export async function activarEvento(id: string) {
 }
 
 export async function finalizarEvento(id: string) {
-  return prisma.evento.update({ where: { id }, data: { estado: "FINALIZADO" } });
+  const e = await prisma.$transaction(async (tx) => {
+    // Cierra cualquier pregunta ABIERTA (implicit close al finalizar ejercicio)
+    await tx.pregunta.updateMany({
+      where: { eventoId: id, estado: "ABIERTA" },
+      data: { estado: "CERRADA", cerradaAt: new Date() },
+    });
+    return tx.evento.update({ where: { id }, data: { estado: "FINALIZADO" } });
+  });
+  eventBus.publish(canalEvento(id), {
+    tipo: "evento:finalizado",
+    eventoId: id,
+  });
+  return e;
 }
 
 export async function invitarUsuarios(eventoId: string, userIds: string[]) {

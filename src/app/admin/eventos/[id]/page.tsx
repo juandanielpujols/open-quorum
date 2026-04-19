@@ -165,6 +165,9 @@ export default async function EventoDetallePage({
     } else if (tipo === "OPCION_MULTIPLE") {
       configRaw.permitirMultiple = fd.get("permitirMultiple") === "on";
       configRaw.maxSelecciones = Number(fd.get("maxSelecciones") ?? 1);
+      configRaw.chartTipo = String(fd.get("chartTipo") ?? "BARRAS_H");
+    } else if (tipo === "SI_NO") {
+      configRaw.chartTipo = String(fd.get("chartTipo") ?? "BARRAS_V");
     } else if (tipo === "NUBE_PALABRAS") {
       configRaw.palabrasPorVotante = Number(fd.get("palabrasPorVotante") ?? 3);
       configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 30);
@@ -208,6 +211,9 @@ export default async function EventoDetallePage({
     } else if (tipo === "OPCION_MULTIPLE") {
       configRaw.permitirMultiple = fd.get("permitirMultiple") === "on";
       configRaw.maxSelecciones = Number(fd.get("maxSelecciones") ?? 1);
+      configRaw.chartTipo = String(fd.get("chartTipo") ?? "BARRAS_H");
+    } else if (tipo === "SI_NO") {
+      configRaw.chartTipo = String(fd.get("chartTipo") ?? "BARRAS_V");
     } else if (tipo === "NUBE_PALABRAS") {
       configRaw.palabrasPorVotante = Number(fd.get("palabrasPorVotante") ?? 3);
       configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 30);
@@ -448,7 +454,36 @@ export default async function EventoDetallePage({
                                         className={fieldCls}
                                       />
                                     </div>
+                                    <div className="space-y-1.5">
+                                      <Label className={labelCls}>Gráfico en proyector</Label>
+                                      <select
+                                        name="chartTipo"
+                                        defaultValue={String(config.chartTipo ?? "BARRAS_H")}
+                                        className={fieldCls}
+                                      >
+                                        <option value="BARRAS_H">Barras horizontales</option>
+                                        <option value="BARRAS_V">Barras verticales</option>
+                                        <option value="NUMEROS">Solo números</option>
+                                        <option value="POSICIONAL_XY">Posicional X/Y (2 opciones)</option>
+                                      </select>
+                                    </div>
                                   </>
+                                )}
+
+                                {p.tipo === "SI_NO" && (
+                                  <div className="space-y-1.5">
+                                    <Label className={labelCls}>Gráfico en proyector</Label>
+                                    <select
+                                      name="chartTipo"
+                                      defaultValue={String(config.chartTipo ?? "BARRAS_V")}
+                                      className={fieldCls}
+                                    >
+                                      <option value="BARRAS_V">Barras verticales</option>
+                                      <option value="BARRAS_H">Barras horizontales</option>
+                                      <option value="NUMEROS">Solo números</option>
+                                      <option value="POSICIONAL_XY">Posicional X/Y</option>
+                                    </select>
+                                  </div>
                                 )}
 
                                 {p.tipo === "ESCALA" && (

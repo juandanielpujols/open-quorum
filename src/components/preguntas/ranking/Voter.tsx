@@ -10,7 +10,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { Check, GripVertical } from "lucide-react";
 
 type Props = {
   opciones: Opcion[];
@@ -73,7 +73,12 @@ export function VoterRanking({ opciones, onSubmit }: Props) {
   }
 
   if (done)
-    return <p className="text-center py-8 text-sb-verde">✓ Tu voto fue registrado</p>;
+    return (
+      <p className="flex items-center justify-center gap-2 rounded-lg bg-brand-success/10 py-6 text-center font-medium text-brand-success-deep">
+        <Check aria-hidden className="size-5" />
+        Tu voto fue registrado
+      </p>
+    );
 
   // Map opcionId → opcion para render
   const byId = new Map(opciones.map((o) => [o.id, o]));
@@ -95,9 +100,10 @@ export function VoterRanking({ opciones, onSubmit }: Props) {
         </SortableContext>
       </DndContext>
       <button
+        type="button"
         onClick={submit}
         disabled={sending}
-        className="w-full rounded-lg bg-brand-navy p-3 text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-brand-navy p-4 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-navy-deep disabled:cursor-not-allowed disabled:opacity-50"
       >
         {sending ? "Enviando..." : "Enviar orden"}
       </button>

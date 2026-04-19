@@ -21,6 +21,23 @@ const fieldCls =
 const labelCls =
   "text-[11px] font-bold uppercase tracking-[0.12em] text-brand-muted";
 
+function ChartTipoField({ defaultValue }: { defaultValue: "NUMEROS" | "BARRAS_H" | "BARRAS_V" | "POSICIONAL_XY" }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className={labelCls}>Tipo de gráfico en proyector</Label>
+      <select name="chartTipo" defaultValue={defaultValue} className={fieldCls}>
+        <option value="BARRAS_H">Barras horizontales</option>
+        <option value="BARRAS_V">Barras verticales</option>
+        <option value="NUMEROS">Solo números</option>
+        <option value="POSICIONAL_XY">Posicional X/Y (2 opciones)</option>
+      </select>
+      <p className="text-[11px] text-brand-muted">
+        El tipo posicional requiere exactamente dos opciones (una por eje).
+      </p>
+    </div>
+  );
+}
+
 export function NuevaPreguntaDialog({
   onCrear,
 }: {
@@ -187,10 +204,15 @@ export function NuevaPreguntaDialog({
           )}
 
           {tipo === "SI_NO" && (
-            <p className="rounded-md border border-brand-border bg-brand-cream px-3 py-2 text-xs text-brand-muted">
-              Las opciones "Sí" y "No" se generan automáticamente.
-            </p>
+            <>
+              <p className="rounded-md border border-brand-border bg-brand-cream px-3 py-2 text-xs text-brand-muted">
+                Las opciones &quot;Sí&quot; y &quot;No&quot; se generan automáticamente.
+              </p>
+              <ChartTipoField defaultValue="BARRAS_V" />
+            </>
           )}
+
+          {tipo === "OPCION_MULTIPLE" && <ChartTipoField defaultValue="BARRAS_H" />}
 
           {tipo === "RANKING" && (
             <>
