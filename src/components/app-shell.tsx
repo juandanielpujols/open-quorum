@@ -24,6 +24,7 @@ import {
   Users,
   Tag,
   ShieldCheck,
+  Shield,
   Vote,
   Settings,
   Palette,
@@ -46,6 +47,7 @@ const NAV_BY_ROLE: Record<Rol, NavGroup[]> = {
       items: [
         { href: "/admin/usuarios", label: "Usuarios", icon: Users },
         { href: "/admin/configuracion/branding", label: "Branding", icon: Palette },
+        { href: "/admin/configuracion/providers", label: "Proveedores", icon: Shield },
       ],
     },
   ],

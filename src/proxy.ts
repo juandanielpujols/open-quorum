@@ -53,9 +53,9 @@ function respuesta429(retryAfterMs: number | undefined): NextResponse {
   return aplicarHeadersSeguridad(res);
 }
 
-export default auth((req) => {
+export default async function proxy(req: Parameters<Parameters<typeof auth>[0]>[0]) {
   const { pathname } = req.nextUrl;
-  const session = req.auth;
+  const session = (await auth()) ?? null;
   const ip = getClientIp(req.headers);
 
   // Rate-limit por IP en endpoints sensibles (anónimos, no requieren sesión)
@@ -113,7 +113,7 @@ export default auth((req) => {
     return aplicarHeadersSeguridad(NextResponse.redirect(new URL("/", req.url)));
 
   return aplicarHeadersSeguridad(NextResponse.next());
-});
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

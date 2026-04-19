@@ -243,3 +243,20 @@ model AppBranding {
   updatedBy String?
   updatedAt DateTime @updatedAt
 }
+
+model AuthProvider {
+  id              String   @id @default(cuid())
+  tipo            String   // "OIDC_GENERIC" | "GOOGLE" | "AZURE_AD" | "KEYCLOAK"
+  nombre          String   // Label mostrado en login (ej "Azure AD")
+  clientId        String
+  clientSecretEnc String   // AES-GCM encriptado con AUTH_SECRET
+  issuer          String?
+  tenantId        String?
+  hostedDomain    String?  // restringir Google a un dominio
+  rolDefault      String   @default("VOTANTE")
+  habilitado      Boolean  @default(true)
+  orden           Int      @default(0)
+  updatedBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

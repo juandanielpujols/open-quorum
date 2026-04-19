@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Palette, Users, ArrowRight } from "lucide-react";
+import { Palette, Users, ArrowRight, Shield } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,12 @@ export default function ConfiguracionPage() {
           label="Branding"
           description="Nombre de la organización, logo y tema de color."
           icon={Palette}
+        />
+        <ConfigCard
+          href="/admin/configuracion/providers"
+          label="Proveedores de identidad"
+          description="SSO: Google, Azure AD, Keycloak, OIDC genérico. Secrets cifrados en DB."
+          icon={Shield}
         />
       </div>
     </div>
