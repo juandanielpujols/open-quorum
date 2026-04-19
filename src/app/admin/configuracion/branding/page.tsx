@@ -116,6 +116,8 @@ export default async function BrandingPage() {
                     <img
                       src={branding.logoUrl}
                       alt={branding.nombre}
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
                       className="h-8 w-auto max-w-[120px] object-contain"
                     />
                   ) : (

@@ -66,6 +66,30 @@ export const obtenerBranding = cache(async () => {
   }
 });
 
+import { z } from "zod";
+
+/**
+ * Validación de logoUrl — el logo se renderiza como <img src={logoUrl}> en
+ * sidebar y login. Si no se valida, un admin malicioso (o uno comprometido)
+ * podría inyectar `javascript:` o una URL interna para SSRF reflexivo o
+ * ataques de leak de contexto (tokens en querystring, etc).
+ *
+ * Reglas: https:// o http://localhost (dev), dominio sano, max 2048 chars.
+ */
+const logoUrlSchema = z
+  .string()
+  .trim()
+  .max(2048, "URL demasiado larga")
+  .url("URL inválida")
+  .refine(
+    (u) => u.startsWith("https://") || u.startsWith("http://localhost"),
+    "Solo https:// está permitido (o http://localhost en dev)",
+  );
+
+const nombreSchema = z.string().trim().min(1).max(120);
+
+const temaSchema = z.enum(["institucional", "esmeralda", "carbon"]);
+
 export async function actualizarBranding(input: {
   nombre?: string;
   logoUrl?: string | null;
@@ -73,11 +97,13 @@ export async function actualizarBranding(input: {
   updatedBy: string;
 }) {
   const data: Record<string, unknown> = { updatedBy: input.updatedBy };
-  if (input.nombre !== undefined) data.nombre = input.nombre.trim();
-  if (input.logoUrl !== undefined) data.logoUrl = input.logoUrl?.trim() || null;
+  if (input.nombre !== undefined) data.nombre = nombreSchema.parse(input.nombre);
+  if (input.logoUrl !== undefined) {
+    const limpio = input.logoUrl?.trim() ?? "";
+    data.logoUrl = limpio.length === 0 ? null : logoUrlSchema.parse(limpio);
+  }
   if (input.tema !== undefined) {
-    if (!esTemaValido(input.tema)) throw new Error("Tema inválido");
-    data.tema = input.tema;
+    data.tema = temaSchema.parse(input.tema);
   }
   return prisma.appBranding.upsert({
     where: { id: SINGLETON_ID },

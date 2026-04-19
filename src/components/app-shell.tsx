@@ -91,6 +91,8 @@ export async function AppShell({
               <img
                 src={branding.logoUrl}
                 alt={branding.nombre}
+                referrerPolicy="no-referrer"
+                loading="lazy"
                 className="h-8 w-auto max-w-[120px] object-contain group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:max-w-[24px]"
               />
             ) : (
