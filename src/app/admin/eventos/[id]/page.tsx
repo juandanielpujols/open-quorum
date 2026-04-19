@@ -5,7 +5,7 @@ import {
   invitarUsuarios,
   removerInvitacion,
 } from "@/server/eventos";
-import { crearPregunta, eliminarPregunta } from "@/server/preguntas";
+import { crearPregunta, eliminarPregunta, actualizarPregunta } from "@/server/preguntas";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
@@ -79,6 +79,33 @@ export default async function EventoDetallePage({
   async function onEliminarPregunta(fd: FormData) {
     "use server";
     await eliminarPregunta(String(fd.get("pid")));
+    revalidatePath(`/admin/eventos/${id}`);
+  }
+
+  async function onActualizarPregunta(fd: FormData) {
+    "use server";
+    const pid = String(fd.get("pid"));
+    const tipo = String(fd.get("tipo")) as "OPCION_MULTIPLE" | "SI_NO" | "ESCALA";
+    const configRaw: Record<string, unknown> = {};
+    if (tipo === "ESCALA") {
+      configRaw.min = Number(fd.get("escalaMin") ?? 1);
+      configRaw.max = Number(fd.get("escalaMax") ?? 5);
+      configRaw.etiquetaMin = String(fd.get("escalaEtiMin") ?? "");
+      configRaw.etiquetaMax = String(fd.get("escalaEtiMax") ?? "");
+    } else if (tipo === "OPCION_MULTIPLE") {
+      configRaw.permitirMultiple = fd.get("permitirMultiple") === "on";
+      configRaw.maxSelecciones = Number(fd.get("maxSelecciones") ?? 1);
+    }
+    const opcionesRaw = String(fd.get("opciones") ?? "")
+      .split("\n")
+      .filter(Boolean);
+    await actualizarPregunta(pid, {
+      enunciado: String(fd.get("enunciado")),
+      descripcion: String(fd.get("descripcion") ?? "") || undefined,
+      visibilidad: String(fd.get("visibilidad")) as "EN_VIVO" | "OCULTO_HASTA_CERRAR",
+      configuracion: configRaw,
+      opciones: opcionesRaw.map((t) => ({ texto: t })),
+    });
     revalidatePath(`/admin/eventos/${id}`);
   }
 
@@ -236,25 +263,129 @@ export default async function EventoDetallePage({
       <section>
         <h2 className="font-semibold mb-3">Preguntas ({e.preguntas.length})</h2>
         <ul className="space-y-2">
-          {e.preguntas.map((p) => (
-            <li
-              key={p.id}
-              className="bg-white rounded-lg border border-gray-100 p-3 flex items-center justify-between"
-            >
-              <div>
-                <p className="font-medium">
-                  {p.orden + 1}. {p.enunciado}
-                </p>
-                <p className="text-xs text-sb-gris">
-                  {p.tipo} · {p.estado} · {p.opciones.length} opciones
-                </p>
-              </div>
-              <form action={onEliminarPregunta}>
-                <input type="hidden" name="pid" value={p.id} />
-                <button className="text-sb-rojo text-sm">Eliminar</button>
-              </form>
-            </li>
-          ))}
+          {e.preguntas.map((p) => {
+            const config = (p.configuracion ?? {}) as Record<string, unknown>;
+            const editable = p.estado === "BORRADOR";
+            return (
+              <li key={p.id} className="bg-white rounded-lg border border-gray-100 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">
+                      {p.orden + 1}. {p.enunciado}
+                    </p>
+                    <p className="text-xs text-sb-gris">
+                      {p.tipo} · {p.estado} · {p.visibilidad} · {p.opciones.length} opciones
+                    </p>
+                  </div>
+                  {editable && (
+                    <form action={onEliminarPregunta}>
+                      <input type="hidden" name="pid" value={p.id} />
+                      <button className="text-sb-rojo text-sm">Eliminar</button>
+                    </form>
+                  )}
+                </div>
+
+                {editable ? (
+                  <details className="mt-3 border-t border-gray-100 pt-3">
+                    <summary className="text-sm cursor-pointer text-sb-azul">
+                      Editar
+                    </summary>
+                    <form action={onActualizarPregunta} className="mt-3 space-y-2">
+                      <input type="hidden" name="pid" value={p.id} />
+                      <input type="hidden" name="tipo" value={p.tipo} />
+                      <input
+                        name="enunciado"
+                        defaultValue={p.enunciado}
+                        required
+                        className="w-full border border-gray-200 rounded-lg p-2 text-sm"
+                      />
+                      <textarea
+                        name="descripcion"
+                        defaultValue={p.descripcion ?? ""}
+                        placeholder="Descripción (opcional)"
+                        className="w-full border border-gray-200 rounded-lg p-2 text-sm"
+                        rows={2}
+                      />
+                      <select
+                        name="visibilidad"
+                        defaultValue={p.visibilidad}
+                        className="w-full border border-gray-200 rounded-lg p-2 text-sm"
+                      >
+                        <option value="OCULTO_HASTA_CERRAR">Oculto hasta cerrar</option>
+                        <option value="EN_VIVO">En vivo</option>
+                      </select>
+
+                      {p.tipo === "OPCION_MULTIPLE" && (
+                        <>
+                          <textarea
+                            name="opciones"
+                            defaultValue={p.opciones.map((o) => o.texto).join("\n")}
+                            placeholder="Opciones (una por línea)"
+                            className="w-full border border-gray-200 rounded-lg p-2 text-sm font-mono"
+                            rows={3}
+                          />
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                name="permitirMultiple"
+                                defaultChecked={!!config.permitirMultiple}
+                              />
+                              Permitir múltiples
+                            </label>
+                            <input
+                              name="maxSelecciones"
+                              type="number"
+                              min={1}
+                              defaultValue={Number(config.maxSelecciones ?? 1)}
+                              className="border border-gray-200 rounded-lg p-2"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {p.tipo === "ESCALA" && (
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <input
+                            name="escalaMin"
+                            type="number"
+                            defaultValue={Number(config.min ?? 1)}
+                            className="border border-gray-200 rounded-lg p-2"
+                          />
+                          <input
+                            name="escalaMax"
+                            type="number"
+                            defaultValue={Number(config.max ?? 5)}
+                            className="border border-gray-200 rounded-lg p-2"
+                          />
+                          <input
+                            name="escalaEtiMin"
+                            defaultValue={String(config.etiquetaMin ?? "")}
+                            placeholder="Etiqueta min"
+                            className="border border-gray-200 rounded-lg p-2"
+                          />
+                          <input
+                            name="escalaEtiMax"
+                            defaultValue={String(config.etiquetaMax ?? "")}
+                            placeholder="Etiqueta max"
+                            className="border border-gray-200 rounded-lg p-2"
+                          />
+                        </div>
+                      )}
+
+                      <button className="bg-sb-azul text-white px-3 py-1.5 rounded-lg text-sm">
+                        Guardar
+                      </button>
+                    </form>
+                  </details>
+                ) : (
+                  <p className="mt-2 text-xs text-sb-gris italic">
+                    🔒 Bloqueada para edición (ya no está en BORRADOR)
+                  </p>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
     </div>

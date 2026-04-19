@@ -97,3 +97,64 @@ export const revelarPregunta = (id: string, adminId: string) =>
 export async function eliminarPregunta(preguntaId: string) {
   return prisma.pregunta.delete({ where: { id: preguntaId } });
 }
+
+const actualizarSchema = z.object({
+  enunciado: z.string().min(1).max(500),
+  descripcion: z.string().optional(),
+  visibilidad: z.enum(["EN_VIVO", "OCULTO_HASTA_CERRAR"]),
+  configuracion: z.unknown(),
+  opciones: z
+    .array(
+      z.object({
+        texto: z.string().min(1),
+        imagenUrl: z.string().url().optional(),
+        esCorrecta: z.boolean().optional(),
+      }),
+    )
+    .default([]),
+});
+
+export async function actualizarPregunta(
+  preguntaId: string,
+  raw: z.input<typeof actualizarSchema>,
+) {
+  const data = actualizarSchema.parse(raw);
+  const existente = await prisma.pregunta.findUnique({ where: { id: preguntaId } });
+  if (!existente) throw new Error("Pregunta no existe");
+  if (existente.estado !== "BORRADOR") {
+    throw new Error("Solo se puede editar una pregunta en estado BORRADOR");
+  }
+
+  const impl = REGISTRY_PREGUNTAS[existente.tipo as keyof typeof REGISTRY_PREGUNTAS];
+  if (!impl) throw new Error(`Tipo ${existente.tipo} no implementado`);
+  const configuracion = impl.schemaConfig.parse(data.configuracion);
+
+  return prisma.$transaction(async (tx) => {
+    // Para MC: reemplazar opciones (seguro porque BORRADOR => no hay votos).
+    // Para SI_NO: reseed fijo. Para ESCALA: no tiene opciones.
+    if (existente.tipo === "OPCION_MULTIPLE") {
+      await tx.opcion.deleteMany({ where: { preguntaId } });
+      if (data.opciones.length) {
+        await tx.opcion.createMany({
+          data: data.opciones.map((o, i) => ({
+            preguntaId,
+            orden: i,
+            texto: o.texto,
+            imagenUrl: o.imagenUrl,
+            esCorrecta: !!o.esCorrecta,
+          })),
+        });
+      }
+    }
+    return tx.pregunta.update({
+      where: { id: preguntaId },
+      data: {
+        enunciado: data.enunciado,
+        descripcion: data.descripcion,
+        visibilidad: data.visibilidad as Visibilidad,
+        configuracion: configuracion as Prisma.InputJsonValue,
+      },
+      include: { opciones: true },
+    });
+  });
+}
