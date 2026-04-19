@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Typecheck, test, build, audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: votaciones
+          POSTGRES_PASSWORD: votaciones_dev
+          POSTGRES_DB: votaciones
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://votaciones:votaciones_dev@localhost:5432/votaciones
+      DATABASE_URL_LOCAL: postgres://votaciones:votaciones_dev@localhost:5432/votaciones
+      AUTH_SECRET: ci-test-secret-do-not-use-in-prod-32bytes
+      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: Open Quorum
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Prisma migrate
+        run: npx prisma migrate deploy
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: npm audit (production deps only, high+ severity)
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+
+      - name: npm audit (full tree report)
+        run: npm audit || true
+
+  security-scan:
+    name: Container scan (Trivy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          mkdir -p public
+          touch public/.gitkeep
+          docker build -t open-quorum:ci .
+
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: open-quorum:ci
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          ignore-unfixed: true
