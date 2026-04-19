@@ -28,6 +28,22 @@ function ResultadosLive({ pregunta }: { pregunta: SnapshotPregunta }) {
   const oculto =
     pregunta.visibilidad === "OCULTO_HASTA_CERRAR" && pregunta.estado !== "REVELADA";
   const chartTipo = extraerChartTipo(pregunta.configuracion);
+
+  // El endpoint /snapshot borra `agregado` para votantes en preguntas ocultas.
+  // No hay nada que renderizar: mostramos placeholder.
+  if (pregunta.agregado == null) {
+    return (
+      <div className="mt-6 rounded-2xl border border-dashed border-brand-border bg-brand-cream/50 p-6 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-muted">
+          Resultados ocultos
+        </p>
+        <p className="mt-2 text-sm text-brand-muted">
+          Los resultados se mostrarán cuando el administrador los revele.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-6 rounded-2xl border border-brand-border bg-brand-paper p-6">
       <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] text-brand-muted">

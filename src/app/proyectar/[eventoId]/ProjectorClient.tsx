@@ -97,30 +97,33 @@ export function ProjectorClient({
           {actual.enunciado}
         </h2>
         <div className="flex w-full items-center justify-center">
-          {actual.tipo === "OPCION_MULTIPLE" && (
+          {actual.agregado == null ? (
+            <p className="text-2xl text-brand-muted">Preparando resultados…</p>
+          ) : null}
+          {actual.agregado != null && actual.tipo === "OPCION_MULTIPLE" && (
             <ProjectorOpcionMultiple
               agregado={actual.agregado as never}
               oculto={oculto}
               chartTipo={chartTipo}
             />
           )}
-          {actual.tipo === "SI_NO" && (
+          {actual.agregado != null && actual.tipo === "SI_NO" && (
             <ProjectorSiNo
               agregado={actual.agregado as never}
               oculto={oculto}
               chartTipo={chartTipo}
             />
           )}
-          {actual.tipo === "ESCALA" && (
+          {actual.agregado != null && actual.tipo === "ESCALA" && (
             <ProjectorEscala agregado={actual.agregado as never} oculto={oculto} />
           )}
-          {actual.tipo === "RANKING" && (
+          {actual.agregado != null && actual.tipo === "RANKING" && (
             <ProjectorRanking agregado={actual.agregado as never} oculto={oculto} />
           )}
-          {actual.tipo === "NUBE_PALABRAS" && (
+          {actual.agregado != null && actual.tipo === "NUBE_PALABRAS" && (
             <ProjectorNubePalabras agregado={actual.agregado as never} oculto={oculto} />
           )}
-          {actual.tipo === "RESPUESTA_ABIERTA" && (
+          {actual.agregado != null && actual.tipo === "RESPUESTA_ABIERTA" && (
             <ProjectorRespuestaAbierta agregado={actual.agregado as never} oculto={oculto} />
           )}
         </div>
