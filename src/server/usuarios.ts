@@ -10,6 +10,9 @@ const inputSchema = z.object({
   creadoPor: z.string(),
 });
 
+// 7 días por defecto — configurable si se amplía con env var
+const TOKEN_VIGENCIA_MS = 7 * 24 * 60 * 60 * 1000;
+
 export async function crearUsuarioInvitado(raw: z.infer<typeof inputSchema>) {
   const { email, nombre, rol, creadoPor } = inputSchema.parse(raw);
 
@@ -18,6 +21,26 @@ export async function crearUsuarioInvitado(raw: z.infer<typeof inputSchema>) {
 
   const tokenActivacion = randomBytes(32).toString("hex");
   return prisma.user.create({
-    data: { email, nombre, rol: rol as Rol, tokenActivacion, creadoPor, activado: false },
+    data: {
+      email,
+      nombre,
+      rol: rol as Rol,
+      tokenActivacion,
+      tokenActivacionExpira: new Date(Date.now() + TOKEN_VIGENCIA_MS),
+      creadoPor,
+      activado: false,
+    },
+  });
+}
+
+/** Regenera el token y reinicia la ventana de expiración. Útil si venció. */
+export async function regenerarTokenActivacion(userId: string) {
+  const token = randomBytes(32).toString("hex");
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      tokenActivacion: token,
+      tokenActivacionExpira: new Date(Date.now() + TOKEN_VIGENCIA_MS),
+    },
   });
 }

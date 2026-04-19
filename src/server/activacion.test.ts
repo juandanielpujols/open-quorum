@@ -13,14 +13,14 @@ describe("activarCuenta", () => {
 
   it("falla si token no existe", async () => {
     (prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue(null);
-    await expect(activarCuenta({ token: "xxx", password: "pass1234" })).rejects.toThrow(/token/i);
+    await expect(activarCuenta({ token: "xxx", password: "Pass12345X" })).rejects.toThrow(/token/i);
   });
 
   it("falla si token es de usuario ya activado", async () => {
     (prisma.user.findUnique as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: "u1", tokenActivacion: "xxx", activado: true,
     });
-    await expect(activarCuenta({ token: "xxx", password: "pass1234" })).rejects.toThrow(/activada/i);
+    await expect(activarCuenta({ token: "xxx", password: "Pass12345X" })).rejects.toThrow(/activada/i);
   });
 
   it("hashea password y activa", async () => {
@@ -29,9 +29,9 @@ describe("activarCuenta", () => {
     });
     (prisma.user.update as ReturnType<typeof vi.fn>).mockImplementation(({ data }) => ({ id: "u1", ...data }));
 
-    const result = await activarCuenta({ token: "xxx", password: "pass1234" });
+    const result = await activarCuenta({ token: "xxx", password: "Pass12345X" });
     expect(result.activado).toBe(true);
     expect(result.tokenActivacion).toBeNull();
-    expect(await bcrypt.compare("pass1234", result.hashedPassword!)).toBe(true);
+    expect(await bcrypt.compare("Pass12345X", result.hashedPassword!)).toBe(true);
   });
 });

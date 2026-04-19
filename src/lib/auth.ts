@@ -13,7 +13,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  // Session de 24h — corta ventanas de session hijack; el refresh extiende
+  // mientras el usuario esté activo. Antes: 30 días (default NextAuth).
+  session: { strategy: "jwt", maxAge: 24 * 60 * 60, updateAge: 60 * 60 },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
