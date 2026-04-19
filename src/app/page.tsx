@@ -6,7 +6,7 @@ export default async function Home() {
   if (!session) redirect("/login");
   switch (session.user.rol) {
     case "ADMIN":
-      redirect("/eventos");
+      redirect("/admin/eventos");
     case "REVIEWER":
       redirect("/reviewer/eventos");
     case "VOTANTE":

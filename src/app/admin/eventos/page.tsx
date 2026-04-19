@@ -10,7 +10,7 @@ export default async function EventosPage() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">Eventos</h1>
         <Link
-          href="/eventos/nuevo"
+          href="/admin/eventos/nuevo"
           className="bg-sb-azul text-white px-4 py-2 rounded-lg"
         >
           Nuevo evento
@@ -20,7 +20,7 @@ export default async function EventosPage() {
         {eventos.map((e) => (
           <li key={e.id} className="bg-white rounded-lg border border-gray-100 p-4">
             <div className="flex items-center justify-between">
-              <Link href={`/eventos/${e.id}`} className="font-medium text-sb-azul">
+              <Link href={`/admin/eventos/${e.id}`} className="font-medium text-sb-azul">
                 {e.nombre}
               </Link>
               <span className="text-xs text-sb-gris">

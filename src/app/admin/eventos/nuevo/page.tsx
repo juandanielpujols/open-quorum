@@ -19,7 +19,7 @@ export default async function NuevoEventoPage() {
       maxPoderesPorProxy: Number(fd.get("maxPoderes")) || undefined,
       creadoPor: session.user.id,
     });
-    redirect(`/eventos/${evento.id}`);
+    redirect(`/admin/eventos/${evento.id}`);
   }
   return (
     <div className="p-6 max-w-xl">

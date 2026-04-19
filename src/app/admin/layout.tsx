@@ -11,9 +11,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex items-center gap-6">
           <span className="font-semibold">{APP_NAME} · Admin</span>
           <nav className="flex gap-4 text-sm">
-            <Link href="/eventos">Eventos</Link>
-            <Link href="/usuarios">Usuarios</Link>
-            <Link href="/tags">Tags</Link>
+            <Link href="/admin/eventos">Eventos</Link>
+            <Link href="/admin/usuarios">Usuarios</Link>
+            <Link href="/admin/tags">Tags</Link>
           </nav>
         </div>
         <form

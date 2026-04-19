@@ -18,7 +18,7 @@ export default async function EventoDetallePage({
   async function onActivar() {
     "use server";
     await activarEvento(id);
-    revalidatePath(`/eventos/${id}`);
+    revalidatePath(`/admin/eventos/${id}`);
   }
 
   async function onCrearPregunta(fd: FormData) {
@@ -43,13 +43,13 @@ export default async function EventoDetallePage({
       configuracion: configRaw,
       opciones: opcionesRaw.map((t) => ({ texto: t })),
     });
-    revalidatePath(`/eventos/${id}`);
+    revalidatePath(`/admin/eventos/${id}`);
   }
 
   async function onEliminarPregunta(fd: FormData) {
     "use server";
     await eliminarPregunta(String(fd.get("pid")));
-    revalidatePath(`/eventos/${id}`);
+    revalidatePath(`/admin/eventos/${id}`);
   }
 
   return (
@@ -69,7 +69,7 @@ export default async function EventoDetallePage({
           )}
           {e.estado === "ACTIVO" && (
             <Link
-              href={`/eventos/${e.id}/control`}
+              href={`/admin/eventos/${e.id}/control`}
               className="bg-sb-azul text-white px-4 py-2 rounded-lg"
             >
               Control en vivo →

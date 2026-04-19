@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
-const RUTAS_ADMIN = ["/admin", "/usuarios", "/tags"];
+const RUTAS_ADMIN = ["/admin"];
 const RUTAS_REVIEWER = ["/reviewer"];
-const RUTAS_VOTANTE = ["/votante", "/votar"];
+const RUTAS_VOTANTE = ["/votante"];
 const RUTAS_PROYECTAR = ["/proyectar"];
 
 export default auth((req) => {
@@ -31,9 +31,7 @@ export default auth((req) => {
 
   const rol = session.user.rol;
 
-  const enAdmin =
-    RUTAS_ADMIN.some((p) => pathname.startsWith(p)) ||
-    (pathname.startsWith("/eventos") && rol === "ADMIN");
+  const enAdmin = RUTAS_ADMIN.some((p) => pathname.startsWith(p));
   const enReviewer = RUTAS_REVIEWER.some((p) => pathname.startsWith(p));
   const enVotante = RUTAS_VOTANTE.some((p) => pathname.startsWith(p));
   const enProyectar = RUTAS_PROYECTAR.some((p) => pathname.startsWith(p));
