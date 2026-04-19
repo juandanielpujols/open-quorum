@@ -2,9 +2,12 @@ import Link from "next/link";
 import {
   obtenerEvento,
   activarEvento,
+  finalizarEvento,
   invitarUsuarios,
   removerInvitacion,
 } from "@/server/eventos";
+import { NuevaPreguntaDialog } from "@/components/eventos/nueva-pregunta-dialog";
+import { FinalizarEventoDialog } from "@/components/eventos/finalizar-evento-dialog";
 import { crearPregunta, eliminarPregunta, actualizarPregunta } from "@/server/preguntas";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -86,6 +89,12 @@ export default async function EventoDetallePage({
   async function onActivar() {
     "use server";
     await activarEvento(id);
+    revalidatePath(`/admin/eventos/${id}`);
+  }
+
+  async function onFinalizar() {
+    "use server";
+    await finalizarEvento(id);
     revalidatePath(`/admin/eventos/${id}`);
   }
 
@@ -208,130 +217,45 @@ export default async function EventoDetallePage({
               </form>
             )}
             {e.estado === "ACTIVO" && (
-              <Button asChild className="bg-brand-navy text-white hover:bg-brand-navy-deep">
-                <Link href={`/admin/eventos/${e.id}/control`}>
-                  Control en vivo
-                  <ArrowRight aria-hidden className="size-4" />
-                </Link>
-              </Button>
+              <>
+                <FinalizarEventoDialog eventoNombre={e.nombre} onConfirm={onFinalizar} />
+                <Button asChild className="bg-brand-navy text-white hover:bg-brand-navy-deep">
+                  <Link href={`/admin/eventos/${e.id}/control`}>
+                    Control en vivo
+                    <ArrowRight aria-hidden className="size-4" />
+                  </Link>
+                </Button>
+              </>
             )}
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Columna principal: nueva pregunta + preguntas */}
+        {/* Columna principal: preguntas */}
         <div className="space-y-6 lg:col-span-2">
-          <Card className="border-brand-border bg-brand-paper shadow-none">
-            <CardHeader className="pb-4">
-              <CardTitle className="font-display text-lg font-semibold text-brand-ink">
-                Nueva pregunta
-              </CardTitle>
-              <CardDescription className="text-xs text-brand-muted">
-                Agrega preguntas al evento. Podrás editarlas mientras estén en borrador.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form action={onCrearPregunta} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="enunciado" className={labelCls}>
-                    Enunciado
-                  </Label>
-                  <Input
-                    id="enunciado"
-                    name="enunciado"
-                    placeholder="Ej: ¿Aprobamos el presupuesto 2026?"
-                    required
-                    className={fieldCls}
-                  />
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="tipo" className={labelCls}>
-                      Tipo
-                    </Label>
-                    <select name="tipo" id="tipo" className={fieldCls}>
-                      <option value="OPCION_MULTIPLE">Opción múltiple</option>
-                      <option value="SI_NO">Sí / No</option>
-                      <option value="ESCALA">Escala 1-5</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="visibilidad" className={labelCls}>
-                      Visibilidad de resultados
-                    </Label>
-                    <select name="visibilidad" id="visibilidad" className={fieldCls}>
-                      <option value="OCULTO_HASTA_CERRAR">Oculto hasta cerrar</option>
-                      <option value="EN_VIVO">En vivo</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="opciones" className={labelCls}>
-                    Opciones (una por línea)
-                  </Label>
-                  <textarea
-                    id="opciones"
-                    name="opciones"
-                    placeholder="Opción A&#10;Opción B&#10;Opción C"
-                    rows={4}
-                    className={cn(fieldCls, "h-auto py-2 font-mono text-xs")}
-                  />
-                  <p className="text-[11px] text-brand-muted">
-                    Para Sí/No y Escala, las opciones se generan automáticamente.
-                  </p>
-                </div>
-                <details className="rounded-md border border-brand-border bg-brand-cream/40">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-brand-body hover:text-brand-ink">
-                    Opciones avanzadas por tipo
-                  </summary>
-                  <div className="grid grid-cols-1 gap-2 border-t border-brand-border p-3 sm:grid-cols-2">
-                    <label className="flex items-center gap-2 text-xs">
-                      <input
-                        type="checkbox"
-                        name="permitirMultiple"
-                        className="size-3.5 accent-brand-navy"
-                      />
-                      Permitir múltiples (MC)
-                    </label>
-                    <Input
-                      name="maxSelecciones"
-                      type="number"
-                      min={1}
-                      defaultValue={1}
-                      placeholder="Máx. selecciones"
-                      className={fieldCls}
-                    />
-                    <Input name="escalaMin" type="number" defaultValue={1} placeholder="Escala min" className={fieldCls} />
-                    <Input name="escalaMax" type="number" defaultValue={5} placeholder="Escala max" className={fieldCls} />
-                    <Input name="escalaEtiMin" placeholder="Etiqueta min (Escala)" className={fieldCls} />
-                    <Input name="escalaEtiMax" placeholder="Etiqueta max (Escala)" className={fieldCls} />
-                  </div>
-                </details>
-                <Button
-                  type="submit"
-                  className="bg-brand-navy text-white hover:bg-brand-navy-deep"
-                >
-                  <Plus aria-hidden className="size-4" />
-                  Agregar pregunta
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Preguntas */}
           <section>
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="font-display text-lg font-semibold text-brand-ink">
                 Preguntas
                 <span className="ml-2 text-sm font-normal text-brand-muted">
                   ({e.preguntas.length})
                 </span>
               </h2>
+              {e.estado === "BORRADOR" && (
+                <NuevaPreguntaDialog onCrear={onCrearPregunta} />
+              )}
             </div>
             {e.preguntas.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-brand-border bg-brand-paper/60 px-6 py-10 text-center text-sm text-brand-muted">
-                Todavía no hay preguntas. Usa el formulario de arriba.
+              <div className="rounded-xl border border-dashed border-brand-border bg-brand-paper/60 px-6 py-10 text-center">
+                <p className="text-sm text-brand-muted">
+                  Todavía no hay preguntas.
+                </p>
+                {e.estado === "BORRADOR" && (
+                  <div className="mt-4">
+                    <NuevaPreguntaDialog onCrear={onCrearPregunta} />
+                  </div>
+                )}
               </div>
             ) : (
               <ul className="space-y-2">
