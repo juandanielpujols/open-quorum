@@ -8,6 +8,23 @@ import {
 } from "@/server/eventos";
 import { NuevaPreguntaDialog } from "@/components/eventos/nueva-pregunta-dialog";
 import { FinalizarEventoDialog } from "@/components/eventos/finalizar-evento-dialog";
+import { ResultadoInline } from "@/components/preguntas/ResultadoInline";
+
+// Muestra resultados cuando:
+// - evento FINALIZADO (admin ve histórico completo aun si no se reveló)
+// - pregunta REVELADA (explícitamente revelada en sesión)
+// - pregunta CERRADA con visibilidad EN_VIVO (los resultados ya fueron públicos)
+function mostrarResultado(
+  p: { estado: string; visibilidad: string; votos: { length: number }[] | { length: number } },
+  estadoEvento: string,
+): boolean {
+  const votos = Array.isArray(p.votos) ? p.votos.length : 0;
+  if (votos === 0) return false;
+  if (estadoEvento === "FINALIZADO") return true;
+  if (p.estado === "REVELADA") return true;
+  if (p.estado === "CERRADA" && p.visibilidad === "EN_VIVO") return true;
+  return false;
+}
 import { crearPregunta, eliminarPregunta, actualizarPregunta } from "@/server/preguntas";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
@@ -22,10 +39,10 @@ import {
   ArrowRight,
   Lock,
   Play,
-  Plus,
   Trash2,
   UserMinus,
   UserPlus,
+  Users,
   Pencil,
   CheckCheck,
 } from "lucide-react";
@@ -103,6 +120,24 @@ export default async function EventoDetallePage({
     const ids = fd.getAll("userId").map(String).filter(Boolean);
     if (ids.length === 0) return;
     await invitarUsuarios(id, ids);
+    revalidatePath(`/admin/eventos/${id}`);
+  }
+
+  async function onInvitarTodos() {
+    "use server";
+    const todos = await prisma.user.findMany({
+      where: {
+        rol: "VOTANTE",
+        activado: true,
+        id: { notIn: Array.from(invitadosIds) },
+      },
+      select: { id: true },
+    });
+    if (todos.length === 0) return;
+    await invitarUsuarios(
+      id,
+      todos.map((u) => u.id),
+    );
     revalidatePath(`/admin/eventos/${id}`);
   }
 
@@ -249,13 +284,10 @@ export default async function EventoDetallePage({
             {e.preguntas.length === 0 ? (
               <div className="rounded-xl border border-dashed border-brand-border bg-brand-paper/60 px-6 py-10 text-center">
                 <p className="text-sm text-brand-muted">
-                  Todavía no hay preguntas.
+                  {e.estado === "BORRADOR"
+                    ? "Todavía no hay preguntas. Usa el botón de arriba para crear la primera."
+                    : "No hay preguntas configuradas para este evento."}
                 </p>
-                {e.estado === "BORRADOR" && (
-                  <div className="mt-4">
-                    <NuevaPreguntaDialog onCrear={onCrearPregunta} />
-                  </div>
-                )}
               </div>
             ) : (
               <ul className="space-y-2">
@@ -427,6 +459,24 @@ export default async function EventoDetallePage({
                               Bloqueada — ya salió de borrador.
                             </p>
                           )}
+
+                          {/* Resultados / histórico */}
+                          {mostrarResultado(p, e.estado) && (
+                            <div className="mt-4 rounded-lg border border-brand-border bg-brand-cream/60 p-4">
+                              <div className="mb-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.12em] text-brand-muted">
+                                <span>Resultados</span>
+                                <span>
+                                  {p.votos.length} voto{p.votos.length === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                              <ResultadoInline
+                                tipo={p.tipo}
+                                configuracion={p.configuracion}
+                                opciones={p.opciones}
+                                votos={p.votos}
+                              />
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     </li>
@@ -498,35 +548,51 @@ export default async function EventoDetallePage({
                   .
                 </p>
               ) : (
-                <form action={onInvitar} className="space-y-2">
-                  <Label className={labelCls}>
-                    Agregar ({usuariosDisponibles.length} disponible
-                    {usuariosDisponibles.length === 1 ? "" : "s"})
-                  </Label>
-                  <p className="text-[11px] text-brand-muted">
-                    Selecciona uno o varios (⌘/Ctrl + click).
-                  </p>
-                  <select
-                    name="userId"
-                    multiple
-                    size={Math.min(6, usuariosDisponibles.length)}
-                    className={cn(fieldCls, "h-auto py-1 text-xs")}
-                  >
-                    {usuariosDisponibles.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.nombre} — {u.email}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="w-full bg-brand-navy text-white hover:bg-brand-navy-deep"
-                  >
-                    <UserPlus aria-hidden className="size-3.5" />
-                    Invitar seleccionados
-                  </Button>
-                </form>
+                <div className="space-y-2">
+                  <form action={onInvitarTodos}>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-brand-navy/40 text-brand-navy hover:bg-brand-navy/5"
+                    >
+                      <Users aria-hidden className="size-3.5" />
+                      Invitar a todos ({usuariosDisponibles.length})
+                    </Button>
+                  </form>
+                  <div className="relative py-1.5 text-center">
+                    <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-brand-border" />
+                    <span className="relative inline-block bg-brand-paper px-2 text-[10px] font-medium uppercase tracking-widest text-brand-muted">
+                      o
+                    </span>
+                  </div>
+                  <form action={onInvitar} className="space-y-2">
+                    <Label className={labelCls}>Seleccionar algunos</Label>
+                    <p className="text-[11px] text-brand-muted">
+                      Mantén ⌘/Ctrl para multi-selección.
+                    </p>
+                    <select
+                      name="userId"
+                      multiple
+                      size={Math.min(6, usuariosDisponibles.length)}
+                      className={cn(fieldCls, "h-auto py-1 text-xs")}
+                    >
+                      {usuariosDisponibles.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.nombre} — {u.email}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      className="w-full bg-brand-navy text-white hover:bg-brand-navy-deep"
+                    >
+                      <UserPlus aria-hidden className="size-3.5" />
+                      Invitar seleccionados
+                    </Button>
+                  </form>
+                </div>
               )}
             </CardContent>
           </Card>

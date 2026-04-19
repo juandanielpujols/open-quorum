@@ -50,7 +50,10 @@ export async function obtenerEvento(id: string) {
     include: {
       preguntas: {
         orderBy: { orden: "asc" },
-        include: { opciones: { orderBy: { orden: "asc" } } },
+        include: {
+          opciones: { orderBy: { orden: "asc" } },
+          votos: true,
+        },
       },
       invitados: { include: { user: true } },
       tags: { include: { tag: true } },
