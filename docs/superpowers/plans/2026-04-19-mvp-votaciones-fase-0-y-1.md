@@ -319,15 +319,15 @@ CMD ["node", "server.js"]
 
 ```yaml
 services:
-  stsi-postgres:
+  votaciones-postgres:
     image: postgres:16-alpine
-    container_name: stsi-postgres
+    container_name: votaciones-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-votaciones}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-votaciones_dev}
       POSTGRES_DB: ${POSTGRES_DB:-votaciones}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -338,13 +338,13 @@ services:
 
   app:
     build: .
-    container_name: stsi-app
+    container_name: votaciones-app
     depends_on:
-      stsi-postgres:
+      votaciones-postgres:
         condition: service_healthy
     env_file: .env.local
     ports:
-      - "3000:3000"
+      - "3002:3000"
 
 volumes:
   postgres_data:
@@ -359,10 +359,10 @@ APP_LOGO_URL=
 NEXT_PUBLIC_APP_NAME=Votaciones
 
 # Infraestructura
-DATABASE_URL=postgres://votaciones:votaciones_dev@stsi-postgres:5432/votaciones
-DATABASE_URL_LOCAL=postgres://votaciones:votaciones_dev@localhost:5432/votaciones
+DATABASE_URL=postgres://votaciones:votaciones_dev@votaciones-postgres:5432/votaciones
+DATABASE_URL_LOCAL=postgres://votaciones:votaciones_dev@localhost:5433/votaciones
 AUTH_SECRET=change-me-with-openssl-rand-base64-32
-AUTH_URL=http://localhost:3000
+AUTH_URL=http://localhost:3002
 POSTGRES_USER=votaciones
 POSTGRES_PASSWORD=votaciones_dev
 POSTGRES_DB=votaciones
@@ -377,8 +377,8 @@ Expected: imprime un secret. Pégalo en `.env.local` reemplazando `change-me-...
 
 - [ ] **Step 5: Verificar Postgres arranca**
 
-Run: `docker compose up -d stsi-postgres && sleep 3 && docker compose ps`
-Expected: `stsi-postgres` en estado `healthy`.
+Run: `docker compose up -d votaciones-postgres && sleep 3 && docker compose ps`
+Expected: `votaciones-postgres` en estado `healthy`.
 
 - [ ] **Step 6: Commit**
 
@@ -1490,16 +1490,16 @@ Expected: `Seed OK: admin@example.local / admin1234`.
 
 - [ ] **Step 4: Smoke manual — login**
 
-Abrir `http://localhost:3000/login`, ingresar `admin@example.local / admin1234`.
+Abrir `http://localhost:3002/login`, ingresar `admin@example.local / admin1234`.
 Expected: redirige a `/eventos` (404 por ahora es OK — lo creamos en Task 1.4).
 
 - [ ] **Step 5: Smoke manual — crear usuario vía API**
 
 ```bash
-curl -c cookies.txt -b cookies.txt -X POST http://localhost:3000/api/auth/callback/credentials \
-  -d "email=admin@example.local&password=admin1234&csrfToken=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf | python3 -c 'import sys,json;print(json.load(sys.stdin)[\"csrfToken\"])')"
+curl -c cookies.txt -b cookies.txt -X POST http://localhost:3002/api/auth/callback/credentials \
+  -d "email=admin@example.local&password=admin1234&csrfToken=$(curl -s -c cookies.txt http://localhost:3002/api/auth/csrf | python3 -c 'import sys,json;print(json.load(sys.stdin)[\"csrfToken\"])')"
 
-curl -b cookies.txt -X POST http://localhost:3000/api/invitaciones \
+curl -b cookies.txt -X POST http://localhost:3002/api/invitaciones \
   -H "content-type: application/json" \
   -d '{"email":"votante1@example.local","nombre":"Votante Uno","rol":"VOTANTE"}'
 ```
@@ -3834,7 +3834,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3002",
     trace: "on-first-retry",
   },
   projects: [
