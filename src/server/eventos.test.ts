@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mockPrisma = {
+const mockPrisma = vi.hoisted(() => ({
   evento: {
     create: vi.fn(),
     findMany: vi.fn(),
@@ -8,7 +8,8 @@ const mockPrisma = {
     findUnique: vi.fn(),
   },
   eventoInvitacion: { createMany: vi.fn(), deleteMany: vi.fn() },
-};
+}));
+
 vi.mock("@/lib/db", () => ({ prisma: mockPrisma }));
 
 import { crearEvento, activarEvento } from "./eventos";
