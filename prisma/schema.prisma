@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ADMIN
+  REVIEWER
+  VOTANTE
+}
+
+enum ModoEvento {
+  VIVO
+  ASINCRONO
+}
+
+enum EstadoEvento {
+  BORRADOR
+  ACTIVO
+  FINALIZADO
+}
+
+enum EstadoPregunta {
+  BORRADOR
+  ABIERTA
+  CERRADA
+  REVELADA
+}
+
+enum Visibilidad {
+  EN_VIVO
+  OCULTO_HASTA_CERRAR
+}
+
+enum TipoPregunta {
+  OPCION_MULTIPLE
+  SI_NO
+  ESCALA
+  RANKING
+  NUBE_PALABRAS
+  RESPUESTA_ABIERTA
+  QUIZ
+  QA
+  HEATMAP
+}
+
+enum OrigenVoto {
+  DIRECTO
+  PODER
+}
+
+enum EstadoQA {
+  PENDIENTE
+  RESPONDIDA
+  DESCARTADA
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  nombre            String
+  fotoUrl           String?
+  hashedPassword    String?
+  rol               Rol
+  activado          Boolean  @default(false)
+  tokenActivacion   String?  @unique
+  tokenRecuperacion String?  @unique
+  creadoPor         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  votos             Voto[]
+  eventosCreados    Evento[] @relation("EventoCreador")
+  invitaciones      EventoInvitacion[]
+  poderesOtorgados  Poder[]  @relation("Grantor")
+  poderesRecibidos  Poder[]  @relation("Proxy")
+}
+
+model Evento {
+  id                 String   @id @default(cuid())
+  nombre             String
+  descripcion        String?
+  modo               ModoEvento
+  estado             EstadoEvento @default(BORRADOR)
+  inicioAt           DateTime?
+  cierreAt           DateTime?
+  maxPoderesPorProxy Int?
+  creadoPor          String
+  creador            User     @relation("EventoCreador", fields: [creadoPor], references: [id])
+  preguntas          Pregunta[]
+  invitados          EventoInvitacion[]
+  tags               EventoTag[]
+  poderes            Poder[]
+  resumenes          ResumenPDF[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model EventoInvitacion {
+  eventoId String
+  userId   String
+  evento   Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id])
+  @@id([eventoId, userId])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  nombre    String     @unique
+  color     String?
+  eventos   EventoTag[]
+  createdAt DateTime   @default(now())
+}
+
+model EventoTag {
+  eventoId String
+  tagId    String
+  evento   Evento @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id])
+  @@id([eventoId, tagId])
+}
+
+model Pregunta {
+  id            String         @id @default(cuid())
+  eventoId      String
+  evento        Evento         @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  orden         Int
+  tipo          TipoPregunta
+  enunciado     String
+  descripcion   String?
+  visibilidad   Visibilidad    @default(OCULTO_HASTA_CERRAR)
+  estado        EstadoPregunta @default(BORRADOR)
+  configuracion Json
+  abiertaAt     DateTime?
+  cerradaAt     DateTime?
+  opciones      Opcion[]
+  votos         Voto[]
+  qaItems       QAItem[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  @@index([eventoId, orden])
+}
+
+model Opcion {
+  id         String   @id @default(cuid())
+  preguntaId String
+  pregunta   Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  orden      Int
+  texto      String
+  imagenUrl  String?
+  esCorrecta Boolean  @default(false)
+}
+
+model Voto {
+  id             String     @id @default(cuid())
+  preguntaId     String
+  userId         String
+  respuesta      Json
+  emitidoVia     OrigenVoto @default(DIRECTO)
+  representandoA String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  pregunta       Pregunta   @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  user           User       @relation(fields: [userId], references: [id])
+  @@unique([preguntaId, userId, representandoA])
+  @@index([preguntaId])
+}
+
+model Poder {
+  id         String    @id @default(cuid())
+  grantorId  String
+  proxyId    String
+  eventoId   String?
+  otorgadoAt DateTime  @default(now())
+  revocadoAt DateTime?
+  grantor    User      @relation("Grantor", fields: [grantorId], references: [id])
+  proxy      User      @relation("Proxy", fields: [proxyId], references: [id])
+  evento     Evento?   @relation(fields: [eventoId], references: [id])
+  @@index([grantorId, revocadoAt])
+  @@index([proxyId, revocadoAt])
+}
+
+model QAItem {
+  id         String   @id @default(cuid())
+  preguntaId String
+  autorId    String?
+  texto      String
+  estado     EstadoQA @default(PENDIENTE)
+  createdAt  DateTime @default(now())
+  pregunta   Pregunta @relation(fields: [preguntaId], references: [id], onDelete: Cascade)
+  votos      QAVoto[]
+}
+
+model QAVoto {
+  qaItemId String
+  userId   String
+  qaItem   QAItem @relation(fields: [qaItemId], references: [id], onDelete: Cascade)
+  @@id([qaItemId, userId])
+}
+
+model ResumenPDF {
+  id          String   @id @default(cuid())
+  eventoId    String
+  generadoPor String
+  archivoUrl  String
+  generadoAt  DateTime @default(now())
+  evento      Evento   @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  userId    String
+  tipo      String
+  contexto  Json?
+  enviadoAt DateTime @default(now())
+  error     String?
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  accion    String
+  targetId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+  @@index([targetId, createdAt])
+}

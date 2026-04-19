@@ -17,17 +17,18 @@
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "bcryptjs": "^2.4.3",
+    "lucide-react": "^0.470.0",
     "next": "^16.0.0",
     "next-auth": "^5.0.0-beta.26",
     "pg": "^8.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.0",
-    "lucide-react": "^0.470.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
+    "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",
     "@types/bcryptjs": "^2.4.6",
@@ -36,10 +37,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "dotenv": "^17.4.2",
     "happy-dom": "^15.11.0",
     "prisma": "^7.0.0",
     "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   }
