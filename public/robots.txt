@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin
+Disallow: /reviewer
+Disallow: /votante
+Disallow: /votar
+Disallow: /proyectar
+Disallow: /api
+Disallow: /activar

@@ -1,12 +1,13 @@
 import { auth } from "@/lib/auth";
-import { crearStreamEvento } from "@/lib/sse";
+import { crearStreamEvento, reservarSlotSSE } from "@/lib/sse";
+import { getClientIp } from "@/lib/rate-limit";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -20,7 +21,12 @@ export async function GET(
     if (!inv) return new Response("forbidden", { status: 403 });
   }
 
-  const stream = crearStreamEvento(id);
+  const ip = getClientIp(req.headers);
+  if (!reservarSlotSSE(ip)) {
+    return new Response("too many connections", { status: 429 });
+  }
+
+  const stream = crearStreamEvento(id, ip);
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",

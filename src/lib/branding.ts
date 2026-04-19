@@ -105,7 +105,7 @@ export async function actualizarBranding(input: {
   if (input.tema !== undefined) {
     data.tema = temaSchema.parse(input.tema);
   }
-  return prisma.appBranding.upsert({
+  const result = await prisma.appBranding.upsert({
     where: { id: SINGLETON_ID },
     create: {
       id: SINGLETON_ID,
@@ -116,4 +116,15 @@ export async function actualizarBranding(input: {
     },
     update: data,
   });
+  // Importar aquí para evitar dependencia circular con auth.ts
+  const { registrarAudit } = await import("./audit");
+  await registrarAudit({
+    userId: input.updatedBy,
+    accion: "branding.actualizar",
+    targetId: SINGLETON_ID,
+    metadata: {
+      cambios: Object.keys(data).filter((k) => k !== "updatedBy"),
+    },
+  });
+  return result;
 }

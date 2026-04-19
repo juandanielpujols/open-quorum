@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
+import { registrarAudit } from "@/lib/audit";
 import type { Rol } from "@/generated/prisma";
 
 const inputSchema = z.object({
@@ -20,7 +21,7 @@ export async function crearUsuarioInvitado(raw: z.infer<typeof inputSchema>) {
   if (existing) throw new Error("Usuario con ese email ya existe");
 
   const tokenActivacion = randomBytes(32).toString("hex");
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       nombre,
@@ -31,6 +32,13 @@ export async function crearUsuarioInvitado(raw: z.infer<typeof inputSchema>) {
       activado: false,
     },
   });
+  await registrarAudit({
+    userId: creadoPor,
+    accion: "usuario.crear",
+    targetId: user.id,
+    metadata: { email, rol },
+  });
+  return user;
 }
 
 /** Regenera el token y reinicia la ventana de expiración. Útil si venció. */
