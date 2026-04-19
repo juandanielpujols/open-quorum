@@ -228,3 +228,12 @@ model AuditLog {
   createdAt DateTime @default(now())
   @@index([targetId, createdAt])
 }
+
+model AppBranding {
+  id        String   @id @default("singleton")
+  nombre    String   @default("Votaciones")
+  logoUrl   String?
+  tema      String   @default("institucional")
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}

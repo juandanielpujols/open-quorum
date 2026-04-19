@@ -12,6 +12,7 @@ export async function obtenerSnapshotEvento(eventoId: string) {
           votos: true,
         },
       },
+      _count: { select: { invitados: true } },
     },
   });
   if (!evento) return null;
@@ -46,6 +47,7 @@ export async function obtenerSnapshotEvento(eventoId: string) {
     nombre: evento.nombre,
     estado: evento.estado,
     modo: evento.modo,
+    totalInvitados: evento._count.invitados,
     preguntas,
   };
 }

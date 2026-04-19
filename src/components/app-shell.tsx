@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Rol } from "@/generated/prisma";
 import { auth, signOut } from "@/lib/auth";
+import { obtenerBranding } from "@/lib/branding";
 import {
   SidebarProvider,
   Sidebar,
@@ -23,39 +24,47 @@ import {
   ShieldCheck,
   Vote,
   LogOut,
+  Settings,
+  Palette,
 } from "lucide-react";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Votaciones";
-
 type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavGroup = { label: string; items: NavItem[] };
 
-const NAV_BY_ROLE: Record<Rol, { label: string; items: NavItem[] }> = {
-  ADMIN: {
-    label: "Administración",
-    items: [
-      { href: "/admin/eventos", label: "Eventos", icon: CalendarCheck2 },
-      { href: "/admin/usuarios", label: "Usuarios", icon: Users },
-      { href: "/admin/tags", label: "Tags", icon: Tag },
-    ],
-  },
-  REVIEWER: {
-    label: "Revisión",
-    items: [{ href: "/reviewer/eventos", label: "Eventos", icon: ShieldCheck }],
-  },
-  VOTANTE: {
-    label: "Mis votaciones",
-    items: [{ href: "/votante/eventos", label: "Votaciones activas", icon: Vote }],
-  },
+const NAV_BY_ROLE: Record<Rol, NavGroup[]> = {
+  ADMIN: [
+    {
+      label: "Administración",
+      items: [
+        { href: "/admin/eventos", label: "Eventos", icon: CalendarCheck2 },
+        { href: "/admin/tags", label: "Tags", icon: Tag },
+      ],
+    },
+    {
+      label: "Configuración",
+      items: [
+        { href: "/admin/usuarios", label: "Usuarios", icon: Users },
+        { href: "/admin/configuracion/branding", label: "Branding", icon: Palette },
+      ],
+    },
+  ],
+  REVIEWER: [
+    {
+      label: "Revisión",
+      items: [{ href: "/reviewer/eventos", label: "Eventos", icon: ShieldCheck }],
+    },
+  ],
+  VOTANTE: [
+    {
+      label: "Mis votaciones",
+      items: [{ href: "/votante/eventos", label: "Votaciones activas", icon: Vote }],
+    },
+  ],
 };
 
-function Monogram({ className = "" }: { className?: string }) {
+function MonogramSVG({ className = "" }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 120 48"
-      className={className}
-      role="img"
-      aria-label="Monograma CGR"
-    >
+    <svg viewBox="0 0 120 48" className={className} role="img" aria-label="Monograma">
       <text
         x="0"
         y="38"
@@ -67,7 +76,7 @@ function Monogram({ className = "" }: { className?: string }) {
       >
         C
       </text>
-      <polygon points="52,30 64,15 64,38" fill="#C62828" />
+      <polygon points="52,30 64,15 64,38" fill="currentColor" className="text-brand-crimson" />
       <text
         x="72"
         y="38"
@@ -99,7 +108,8 @@ export async function AppShell({
   const session = await auth();
   if (!session) return <>{children}</>;
   const rol = session.user.rol;
-  const nav = NAV_BY_ROLE[rol];
+  const groups = NAV_BY_ROLE[rol];
+  const branding = await obtenerBranding();
 
   async function cerrarSesion() {
     "use server";
@@ -111,10 +121,18 @@ export async function AppShell({
       <Sidebar collapsible="icon" className="border-r border-[var(--sidebar-border)]">
         <SidebarHeader className="py-5">
           <div className="flex items-center gap-2 px-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-            <Monogram className="h-7 w-auto text-brand-cream group-data-[collapsible=icon]:h-6" />
+            {branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.nombre}
+                className="h-8 w-auto max-w-[120px] object-contain group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:max-w-[24px]"
+              />
+            ) : (
+              <MonogramSVG className="h-7 w-auto text-brand-cream group-data-[collapsible=icon]:h-6" />
+            )}
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
               <span className="font-display text-base font-semibold text-brand-cream">
-                {APP_NAME}
+                {branding.nombre}
               </span>
               <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cream/50">
                 {ROLE_BADGE[rol]}
@@ -126,26 +144,28 @@ export async function AppShell({
         <SidebarSeparator className="bg-[var(--sidebar-border)]" />
 
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cream/50">
-              {nav.label}
-            </SidebarGroupLabel>
-            <SidebarMenu>
-              {nav.items.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild tooltip={item.label}>
-                      <Link href={item.href}>
-                        <Icon className="size-4" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
+          {groups.map((grp) => (
+            <SidebarGroup key={grp.label}>
+              <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cream/50">
+                {grp.label}
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {grp.items.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton asChild tooltip={item.label}>
+                        <Link href={item.href}>
+                          <Icon className="size-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          ))}
         </SidebarContent>
 
         <SidebarFooter className="py-4">
@@ -162,7 +182,7 @@ export async function AppShell({
               <button
                 type="submit"
                 aria-label="Cerrar sesión"
-                className="inline-flex size-8 items-center justify-center rounded-md text-brand-cream/70 transition-colors hover:bg-[var(--sidebar-accent)] hover:text-brand-cream focus:outline-none focus:ring-2 focus:ring-brand-crimson"
+                className="inline-flex size-8 items-center justify-center rounded-md text-brand-cream/70 transition-colors hover:bg-[var(--sidebar-accent)] hover:text-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-crimson"
               >
                 <LogOut className="size-4" />
               </button>
@@ -185,3 +205,5 @@ export async function AppShell({
     </SidebarProvider>
   );
 }
+
+export { Settings };

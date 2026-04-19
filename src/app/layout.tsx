@@ -1,7 +1,6 @@
 import "./globals.css";
 import { Crimson_Pro, Atkinson_Hyperlegible } from "next/font/google";
-
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Votaciones";
+import { obtenerBranding } from "@/lib/branding";
 
 const display = Crimson_Pro({
   subsets: ["latin"],
@@ -17,14 +16,18 @@ const body = Atkinson_Hyperlegible({
   weight: ["400", "700"],
 });
 
-export const metadata = {
-  title: APP_NAME,
-  description: "Sistema de votaciones en línea",
-};
+export async function generateMetadata() {
+  const branding = await obtenerBranding();
+  return {
+    title: branding.nombre,
+    description: "Sistema de votaciones en línea",
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const branding = await obtenerBranding();
   return (
-    <html lang="es" className={`${display.variable} ${body.variable}`}>
+    <html lang="es" data-theme={branding.tema} className={`${display.variable} ${body.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

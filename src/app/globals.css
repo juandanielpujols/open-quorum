@@ -3,47 +3,89 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* Brand palette — CGR defaults (navy + crimson) */
-  --color-brand-navy: #1E3A5F;
-  --color-brand-navy-deep: #0F1F3A;
-  --color-brand-navy-soft: #2C4D73;
-  --color-brand-crimson: #C62828;
-  --color-brand-crimson-deep: #8F1F1F;
-  --color-brand-cream: #F8F6F1;
-  --color-brand-cream-deep: #F0EBDF;
-  --color-brand-paper: #FFFFFF;
-  --color-brand-ink: #0F1F3A;
-  --color-brand-body: #334155;
-  --color-brand-muted: #64748B;
-  --color-brand-border: #E5E1D8;
-
-  /* Legacy sb-* retenido temporalmente (remapeado a los nuevos brand tokens) */
-  --color-sb-azul: #1E3A5F;
-  --color-sb-gris: #64748B;
-  --color-sb-verde: #12C69F;
-  --color-sb-terracota: #C62828;
-  --color-sb-rojo: #8F1F1F;
-  --color-sb-petroleo: #2C4D73;
-  --color-sb-claro: #5A97B3;
-  --color-sb-gris-fondo: #E5E1D8;
-  --color-sb-fondo-claro: #F8F6F1;
+  /* Paleta brand — tokens de Tailwind (default = tema institucional).
+     Los valores reales vienen de :root (ver abajo) y se sobreescriben
+     vía [data-theme="..."] para cambiar tema en runtime. */
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-deep: var(--brand-navy-deep);
+  --color-brand-navy-soft: var(--brand-navy-soft);
+  --color-brand-crimson: var(--brand-crimson);
+  --color-brand-crimson-deep: var(--brand-crimson-deep);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-cream-deep: var(--brand-cream-deep);
+  --color-brand-paper: var(--brand-paper);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-body: var(--brand-body);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-border: var(--brand-border);
 
   --font-display: "Crimson Pro", Georgia, serif;
   --font-sans: "Atkinson Hyperlegible", Inter, system-ui, sans-serif;
 }
 
+/* ===== TEMAS ===== */
+
+/* Tema institucional (default) — navy + crimson */
+:root,
+[data-theme="institucional"] {
+  --brand-navy: #1E3A5F;
+  --brand-navy-deep: #0F1F3A;
+  --brand-navy-soft: #2C4D73;
+  --brand-crimson: #C62828;
+  --brand-crimson-deep: #8F1F1F;
+  --brand-cream: #F8F6F1;
+  --brand-cream-deep: #F0EBDF;
+  --brand-paper: #FFFFFF;
+  --brand-ink: #0F1F3A;
+  --brand-body: #334155;
+  --brand-muted: #64748B;
+  --brand-border: #E5E1D8;
+}
+
+/* Tema esmeralda — verde profundo + ámbar */
+[data-theme="esmeralda"] {
+  --brand-navy: #14532D;
+  --brand-navy-deep: #0A2E19;
+  --brand-navy-soft: #256C3F;
+  --brand-crimson: #A16207;
+  --brand-crimson-deep: #713F12;
+  --brand-cream: #FAF6EC;
+  --brand-cream-deep: #EFE7D2;
+  --brand-paper: #FFFFFF;
+  --brand-ink: #0A2E19;
+  --brand-body: #3A4A3F;
+  --brand-muted: #6E7A70;
+  --brand-border: #E5DCC5;
+}
+
+/* Tema carbón — grafito + teal */
+[data-theme="carbon"] {
+  --brand-navy: #1F2937;
+  --brand-navy-deep: #111827;
+  --brand-navy-soft: #374151;
+  --brand-crimson: #0E7490;
+  --brand-crimson-deep: #155E75;
+  --brand-cream: #F4F3EE;
+  --brand-cream-deep: #E8E6DC;
+  --brand-paper: #FFFFFF;
+  --brand-ink: #111827;
+  --brand-body: #334155;
+  --brand-muted: #6B7280;
+  --brand-border: #DFDDD0;
+}
+
 body {
-  background: var(--color-brand-cream);
-  color: var(--color-brand-body);
+  background: var(--brand-cream);
+  color: var(--brand-body);
   font-family: var(--font-sans);
   font-feature-settings: "ss01", "ss02";
 }
 
-/* Sutil grano en superficies principales — opcional, le da textura institucional */
+/* Sutil grano en superficies principales */
 .brand-grain {
   background-image:
-    radial-gradient(rgba(15, 31, 58, 0.04) 1px, transparent 1px),
-    radial-gradient(rgba(15, 31, 58, 0.03) 1px, transparent 1px);
+    radial-gradient(color-mix(in oklch, var(--brand-ink) 5%, transparent) 1px, transparent 1px),
+    radial-gradient(color-mix(in oklch, var(--brand-ink) 3%, transparent) 1px, transparent 1px);
   background-size: 24px 24px, 16px 16px;
   background-position: 0 0, 12px 8px;
 }
@@ -60,27 +102,28 @@ body {
   .cgr-reveal { animation: none; }
 }
 
-/* Sidebar mapeado a la paleta brand (navy deep con cream text, acento crimson) */
+/* ===== SIDEBAR ===== */
+/* Variables de sidebar derivadas de la paleta brand — cambian con el tema. */
 :root {
-  --sidebar: #0F1F3A;                           /* brand-navyDeep */
-  --sidebar-foreground: #F8F6F1;                /* brand-cream */
-  --sidebar-primary: #C62828;                   /* brand-crimson — item activo */
-  --sidebar-primary-foreground: #F8F6F1;
-  --sidebar-accent: rgba(248, 246, 241, 0.08);  /* hover sutil */
-  --sidebar-accent-foreground: #F8F6F1;
-  --sidebar-border: rgba(248, 246, 241, 0.12);
-  --sidebar-ring: #C62828;
+  --sidebar: var(--brand-navy-deep);
+  --sidebar-foreground: var(--brand-cream);
+  --sidebar-primary: var(--brand-crimson);
+  --sidebar-primary-foreground: var(--brand-cream);
+  --sidebar-accent: color-mix(in oklch, var(--brand-cream) 8%, transparent);
+  --sidebar-accent-foreground: var(--brand-cream);
+  --sidebar-border: color-mix(in oklch, var(--brand-cream) 12%, transparent);
+  --sidebar-ring: var(--brand-crimson);
 }
 
 .dark {
-  --sidebar: #0A1628;
-  --sidebar-foreground: #F8F6F1;
-  --sidebar-primary: #C62828;
-  --sidebar-primary-foreground: #F8F6F1;
-  --sidebar-accent: rgba(248, 246, 241, 0.1);
-  --sidebar-accent-foreground: #F8F6F1;
-  --sidebar-border: rgba(248, 246, 241, 0.14);
-  --sidebar-ring: #C62828;
+  --sidebar: var(--brand-navy-deep);
+  --sidebar-foreground: var(--brand-cream);
+  --sidebar-primary: var(--brand-crimson);
+  --sidebar-primary-foreground: var(--brand-cream);
+  --sidebar-accent: color-mix(in oklch, var(--brand-cream) 10%, transparent);
+  --sidebar-accent-foreground: var(--brand-cream);
+  --sidebar-border: color-mix(in oklch, var(--brand-cream) 14%, transparent);
+  --sidebar-ring: var(--brand-crimson);
 }
 
 @theme inline {
