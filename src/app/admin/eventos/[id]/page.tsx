@@ -284,6 +284,21 @@ export default async function EventoDetallePage({
                 </Button>
               </>
             )}
+            {e.estado === "FINALIZADO" && (
+              <Button
+                asChild
+                variant="outline"
+                className="border-brand-navy/40 text-brand-navy hover:bg-brand-navy/5"
+              >
+                <a
+                  href={`/api/eventos/${e.id}/resumen-pdf`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Descargar PDF
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </header>
