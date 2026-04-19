@@ -1,6 +1,6 @@
 # Sistema de Votaciones en Línea — Diseño
 
-**Proyecto:** Club de Gestión de Riesgos
+**Proyecto:** Sistema de votaciones (open-source) para consejos, juntas directivas y asambleas
 **Fecha:** 2026-04-19
 **Estado:** Spec aprobado, pendiente de plan de implementación
 
@@ -8,17 +8,24 @@
 
 ## 1. Contexto y objetivo
 
-Construir un sistema de votaciones en línea tipo Mentimeter/Slido para el Club de Gestión de Riesgos. Los votantes se conectan desde sus dispositivos, el admin controla el flujo desde un panel y proyecta los resultados en vivo en una segunda pantalla. El sistema soporta tanto sesiones en vivo (tipo asamblea) como campañas asíncronas (ventanas de días).
+Construir un sistema de votaciones en línea tipo Mentimeter/Slido, pensado como **herramienta open-source reutilizable** para consejos, juntas directivas, comités y asambleas de cualquier organización. Toda referencia a la organización consumidora (nombre, logo, branding) debe vivir en configuración — env vars como `APP_NAME`, `APP_LOGO_URL` — nunca en código fuente, comentarios, commits o lógica de dominio. El único lugar donde aparece el nombre de una organización es la UI configurable por despliegue.
+
+Los votantes se conectan desde sus dispositivos, el admin controla el flujo desde un panel y proyecta los resultados en vivo en una segunda pantalla. El sistema soporta tanto sesiones en vivo (tipo asamblea) como campañas asíncronas (ventanas de días).
 
 El voto es confidencial: las respuestas quedan vinculadas al votante en la base de datos (para auditoría y unicidad), pero nunca se muestran individualmente en ninguna UI — solo agregados.
 
 El sistema también soporta voto por representación (poderes), configurable por evento.
 
+**Implicaciones de diseño open-source:**
+- El nombre de la organización, logo y strings de "marca" son **configurables** vía `APP_NAME`, `APP_LOGO_URL` y similares — sin hardcodear nada.
+- El schema, la lógica de dominio y las APIs no mencionan ningún cliente específico.
+- El repositorio se publicará con licencia permisiva (MIT o Apache 2.0) una vez estable.
+
 ## 2. Decisiones clave
 
 | Dimensión | Decisión |
 |---|---|
-| Alcance | Proyecto standalone nuevo (clubgestionriesgos) |
+| Alcance | Proyecto standalone nuevo, open-source, domain-agnostic |
 | Modos | Vivo + Asíncrono |
 | Secrecy | Confidencial operacional (linkeado en DB, oculto en UI) |
 | Estructura | Pregunta puede ir suelta o dentro de un Evento con varias |
