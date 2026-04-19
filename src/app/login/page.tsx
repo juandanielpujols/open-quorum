@@ -1,9 +1,9 @@
 "use client";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
@@ -22,8 +22,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="max-w-sm mx-auto p-6">
-      <h1 className="text-2xl font-semibold mb-4">Ingresar</h1>
+    <>
       {params.get("activada") === "1" && (
         <p className="text-sb-verde text-sm mb-3">Cuenta activada. Inicia sesión.</p>
       )}
@@ -53,6 +52,17 @@ export default function LoginPage() {
           {loading ? "Ingresando..." : "Ingresar"}
         </button>
       </form>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <main className="max-w-sm mx-auto p-6">
+      <h1 className="text-2xl font-semibold mb-4">Ingresar</h1>
+      <Suspense fallback={<p className="text-sb-gris text-sm">Cargando...</p>}>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }
