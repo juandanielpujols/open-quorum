@@ -50,6 +50,16 @@ async function main() {
   await page.goto(`${BASE}/login`);
   await capturar(page, "01-login");
 
+  // Captura mobile del login
+  const loginMobileCtx = await browser.newContext({
+    viewport: { width: 420, height: 820 },
+    deviceScaleFactor: 2,
+  });
+  const loginMobilePage = await loginMobileCtx.newPage();
+  await loginMobilePage.goto(`${BASE}/login`);
+  await capturar(loginMobilePage, "01b-login-mobile");
+  await loginMobileCtx.close();
+
   console.log("Login como admin…");
   await login(page, "admin@example.local", "admin1234");
 

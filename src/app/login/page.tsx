@@ -216,7 +216,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm cgr-reveal">
           {/* Monograma mobile */}
           <div className="mb-10 flex flex-col items-center lg:hidden">
-            <BrandMonogram className="text-2xl text-brand-ink" />
+            <BrandMonogram className="text-5xl text-brand-ink" />
             <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-brand-muted">
               {APP_NAME}
             </p>
