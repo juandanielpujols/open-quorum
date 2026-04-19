@@ -1,113 +1,97 @@
 # CLAUDE.md
 
-## Workflow Orchestration
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-### 1. Plan Mode Default
-- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
-- If something goes sideways, STOP and re-plan immediately — don't keep pushing
-- Use plan mode for verification steps, not just building
-- Write detailed specs upfront to reduce ambiguity
+## Project
 
-### 2. Subagent Strategy
-- Use subagents liberally to keep main context window clean
-- Offload research, exploration, and parallel analysis to subagents
-- For complex problems, throw more compute at it via subagents
-- One task per subagent for focused execution
+Sistema de votaciones en línea, open-source, para consejos, juntas directivas
+y asambleas. El nombre de la organización consumidora se inyecta vía
+`APP_NAME` / `NEXT_PUBLIC_APP_NAME` — nunca hardcodeado en código fuente.
 
-### 3. Self-Improvement Loop
-- After ANY correction from the user: document the lesson in the commit message
-- Write rules for yourself that prevent the same mistake
-- Ruthlessly iterate on these lessons until mistake rate drops
-- Review JOURNAL.html S21 (Lecciones Aprendidas) at session start
+Mentimeter/Slido-like: admin controla desde un panel, proyecta resultados
+en vivo en una segunda pantalla, votantes responden desde sus dispositivos.
+Modos vivo + asíncrono. Secrecy "B" (confidencial operacional): votos
+linkeados a usuario en DB (auditoría) pero nunca expuestos individualmente
+en UI — solo agregados.
 
-### 4. Verification Before Done
-- Never mark a task complete without proving it works
-- Type-check (`tsc --noEmit --skipLibCheck`) before every commit
-- Docker build + deploy before telling the user "listo"
-- Ask yourself: "Would a staff engineer approve this?"
+## Commands
 
-### 5. Demand Elegance (Balanced)
-- For non-trivial changes: pause and ask "is there a more elegant way?"
-- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
-- Skip this for simple, obvious fixes — don't over-engineer
-- Challenge your own work before presenting it
+- `npm run dev` — dev server (Next 16 en localhost:3002 si usas el port mapping Docker; puerto 3000 si corres sin Docker)
+- `npm run build` — production build (Turbopack)
+- `npm test` — unit tests con Vitest
+- `npm run test:watch` — watch mode
+- `npm run type-check` — `tsc --noEmit --skipLibCheck`
+- `npm run e2e` — Playwright smoke tests (requiere seed + app corriendo)
+- `docker compose up -d` — stack completo (Postgres + app)
+- `docker compose build app` — rebuild imagen
+- `npx prisma generate` — regenera cliente en `src/generated/prisma`
+- `npx prisma migrate dev --name <nombre>` — crea migración dev (contra Postgres local port 5433)
+- `npx prisma db seed` — siembra admin / votante / reviewer
 
-### 6. Autonomous Bug Fixing
-- When given a bug report: just fix it. Don't ask for hand-holding
-- Point at logs, errors, failing tests — then resolve them
-- Zero context switching required from the user
-- Go fix failing CI tests without being told how
+## Infraestructura local
 
-## Task Management
-1. **Plan First**: Use plan mode for complex tasks
-2. **Track Progress**: Commit frequently with descriptive messages
-3. **Explain Changes**: High-level summary at each step
-4. **Document in Journal**: Major changes go to JOURNAL.html
-5. **Capture Lessons**: Lessons go in commit messages + JOURNAL.html S21
+- Postgres: container `votaciones-postgres`, puerto host **5433** (interno 5432). No choca con otros Postgres locales en 5432.
+- App Docker: container `votaciones-app`, puerto host **3002** (interno 3000).
+- `.env.local` carga con `dotenv` en dev; Docker compose lee `.env.local` via `env_file`.
+- `prisma.config.ts` (Prisma v7) reemplaza la vieja sección `datasource.url` en schema. Carga `.env.local` explícitamente.
 
-## Core Principles
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
-- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
-- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+## Architecture
 
-## Project-Specific Rules
+Ver spec completo: `docs/superpowers/specs/2026-04-19-sistema-votaciones-design.md`.
 
-### Data & Classification
-- **Hardware (H*: HP, HC, HA) = EOL tracking only**. Never assign SO to hardware. Never create vulnerabilities for hardware.
-- **Software (S*: SA, SO, SP, SS) = Vulnerabilities + EOL**. Only software gets NVD sync.
-- **"Desarrollo Interno" is NOT a third-party provider**. Display entity name instead. Exclude from RTI risk score.
-- **SCORE_CAP and thresholds must be calibrated with real data**, not arbitrary values.
+Plan de implementación (Fase 0 + 1): `docs/superpowers/plans/2026-04-19-mvp-votaciones-fase-0-y-1.md`.
 
-### Filters & Counts
-- **Relationship counts MUST use global data**. When filtering by bank/type, "compartido con", "entidades que lo usan", "proveedores por cantidad de entidades" → use unfiltered dataset. The filter only determines which ROWS to display, not the reference dataset.
-- **Always build TWO maps**: one global (all data) for relationship counts, one filtered for display list.
-- **Proactively propose this pattern** when implementing any new filter feature.
+### Módulos clave
+- `src/lib/db.ts` — PrismaClient singleton con `@prisma/adapter-pg`.
+- `src/lib/auth.ts` + `authorize.ts` — Auth.js v5 (Credentials). `authorize` vive separado para testabilidad (Vitest no resuelve `next/server` dentro de `next-auth`).
+- `src/lib/eventbus.ts` — pub/sub in-memory. Un canal por evento (`evento:<id>`). Para 50-300 conexiones SSE concurrentes, suficiente sin Redis.
+- `src/lib/sse.ts` — `crearStreamEvento()` devuelve un `ReadableStream` que publica al cliente cada `BusEvent` del canal + heartbeat de 25s.
+- `src/lib/permissions.ts` — `can(user, action)` + `assertCan`. Catálogo centralizado de acciones por rol.
+- `src/lib/rate-limit.ts` — token bucket in-memory. Aplicado a `POST /api/votos`.
+- `src/components/preguntas/<tipo>/` — cada tipo de pregunta es auto-contenido: `Schema.ts` (Zod), `Voter.tsx`, `Projector.tsx`, `agregar.ts`. Registry central en `components/preguntas/index.ts`.
+- `src/server/` — lógica de dominio pura (usuarios, activacion, eventos, preguntas, votos, tags, snapshot).
+- `src/middleware.ts` — enforce de rutas por rol (`/admin/*`, `/reviewer/*`, `/votante/*`, `/proyectar/*`).
 
-### Naming & Consistency
-- **When renaming a concept, search ALL files** in the module. Include: labels, placeholders, confirms, error messages, comments visible to users.
-- **Tab labels, titles, subtitles, modals, and confirm dialogs** must all use the same term.
+### Flujo realtime
+1. Admin pulsa "Abrir pregunta" → `POST /api/admin/preguntas/:id/abrir` → `abrirPregunta()` actualiza DB + emite `pregunta:abierta` al `EventBus`.
+2. Todas las conexiones SSE abiertas al evento (`/api/eventos/:id/stream`) reciben el evento.
+3. Clientes (control / proyector / votante) escuchan y refrescan via `GET /api/eventos/:id/snapshot`.
+4. Votante envía voto → `POST /api/votos` → `registrarVoto()` → emite `voto:registrado` (solo contador agregado) al bus.
+5. Proyector + dashboard admin se actualizan en vivo.
 
-### Security & DevOps
-- **HSTS only in production NGINX**, never in next.config.ts. Causes browser cache → 502 on localhost.
-- **Never intercept /api/auth/* with custom middleware**. Breaks NextAuth PKCE flow.
-- **Docker compose reads .env for interpolation**, app reads .env.local via env_file. Both needed.
-- **Every code change requires**: `docker build` → `docker compose up --force-recreate` → verify in browser.
-- **Security changes must be tested with full login flow** before committing.
+## Rules
 
-### Charts & UI
-- **Bar charts must be VERTICAL** (default Recharts layout, never `layout="vertical"`). Use shadcn `ChartContainer` + Recharts `BarChart`.
-- **Recharts** is allowed for dashboards (Estado General, Cumplimiento, Vulnerabilidades). SVG inline for simpler visualizations.
-- **Brand colors (SB palette)**: azul #0d3048, gris #5c7f91, verde #12C69F, terracota #D6490F, rojo #C13410, petróleo #47738C, claro #5A97B3, grisFondo #e1e7eb, fondoClaro #f0f3f5.
-- **Sparklines**: 200px wide, gap-1, right side of metrics. Iterate with user on sizing.
-- **Never use `window.confirm/alert/prompt`** — always use `<ConfirmDialog>` (built on @base-ui/react/alert-dialog).
-- **Dialog/modals** use `@base-ui/react/dialog` via `src/components/ui/dialog.tsx`.
-- **displayName(user)** from `lib/utils.ts` for showing user names — never raw iniciales.
+- **Domain-agnostic:** no hardcodear nombre de organización, cliente o industria en código, commits, comentarios ni strings. Usar `NEXT_PUBLIC_APP_NAME`.
+- **Secrecy B:** `Voto.userId` es NOT NULL pero jamás se expone el par `(userId, respuesta)` en ninguna UI. Solo agregados.
+- **Nuevo tipo de pregunta:** nueva carpeta en `src/components/preguntas/<tipo>/` + entry en `REGISTRY_PREGUNTAS`. Luego actualiza `crearPregunta` (src/server/preguntas.ts) para incluir el tipo en su enum Zod, y los tres clients UI (ControlClient, ProjectorClient, VotarClient) para rutear al nuevo componente.
+- **Tests:** Vitest para unit, Playwright para E2E. Cada cambio → `npm test` + `npm run type-check` antes de commit.
+- **vi.mock + factory:** usa `vi.hoisted()` si necesitas definir mocks que referencian variables — Vitest hoistea `vi.mock` al tope del archivo.
+- **Pages con `useSearchParams()`:** envolver el componente interno en `<Suspense>` (Next 16 lo requiere para build).
+- **Compound unique con nullable field (Prisma v7):** `prisma.voto` con unique `(preguntaId, userId, representandoA)` no permite `null` en la where-clause tipada. Usa `findFirst` + `create`/`update` manual en lugar de `upsert`.
+- **Middleware:** Next 16 renombró `middleware` a `proxy`. Por ahora funciona (warning); migrar cuando sea bloqueante.
 
-### Design System & Impeccable
-- **Use Impeccable skills** for UI work:
-  - `/bolder` — for cards or sections that need visual impact (e.g., Hoja Operativa card in Estado General)
-  - `/normalize` — to realign components with the SB design system
-  - `/polish` — final pass on spacing, transitions, hover states, focus states
-  - `/clarify` — to improve labels, placeholders, error messages, empty states
-  - `/optimize` — conservative performance pass (only real issues, no invented problems)
-- **Card patterns**:
-  - Standard: `bg-white rounded-xl border border-gray-100 shadow-sm`
-  - Headers: `text-base font-semibold` color `#0d3048`, descriptions `text-sm` color `#5c7f91`
-  - Inputs: `border border-gray-200 rounded-lg focus:ring-[#0d3048]/30`
-  - Badges: `rounded-full text-xs font-medium`
-- **Module cards in Estado General** have subtitles (`text-[10px]` color `SB.gris`).
-- **Hoja Operativa** uses a differentiated layout (light bg `#e1e7eb`, 3-column grid). Dark variant (`#0d3048`) saved for future dark mode.
-- **COBIT maturity** uses N0–N5 scale with color-coded badges (rojo→terracota→verde→petróleo→púrpura).
-- **Comparison features** use Dialog modal for selection, terracota overlay on radar charts.
-- **Hover states**: all interactive rows use `hover:bg-[#f0f3f5]`, buttons use `onMouseEnter/Leave` for dynamic styles.
-- **Transitions**: `transition-all duration-300 ease-out` for cards, `duration-500 ease-out` for chart animations.
+## Stack
 
-## Tech Stack
-- **Framework**: Next.js 16 (App Router, standalone output)
-- **Database**: PostgreSQL 16 (Docker, Prisma v7 with @prisma/adapter-pg)
-- **Auth**: NextAuth v5 (Azure AD / Microsoft Entra ID)
-- **Migrations**: `docker exec -i stsi-postgres psql` — never `prisma migrate dev`
-- **Prisma client**: `@/generated/prisma/client` — run `npx prisma generate` after schema changes
-- **Styling**: Tailwind CSS 4, lucide-react icons
-- **Docker**: multi-stage build, non-root user (nextjs:1001)
-- **Git remote**: SSH via port 443 (`ssh://git@ssh.github.com:443/...`)
+- Next.js 16 (App Router, standalone output)
+- Postgres 16 + Prisma v7 + `@prisma/adapter-pg`
+- Auth.js v5 (Credentials + bcrypt cost 12)
+- Tailwind CSS 4 + paleta SB (azul `#0d3048`, verde `#12C69F`, terracota `#D6490F`, petróleo `#47738C`, gris `#5c7f91`)
+- Vitest + @testing-library/react + happy-dom
+- Playwright (E2E)
+- Server-Sent Events (no WebSockets) para realtime
+- Docker Compose (Postgres + app)
+
+## Roles y permisos
+
+| Acción | Admin | Reviewer | Votante |
+|---|:---:|:---:|:---:|
+| CRUD usuarios | ✅ | ❌ | ❌ |
+| CRUD eventos / preguntas | ✅ | ❌ | ❌ |
+| Abrir/cerrar/revelar preguntas | ✅ | ❌ | ❌ |
+| Leer agregados históricos | ✅ | ✅ (read-only) | ❌ |
+| Proyector | ✅ | ❌ | ❌ |
+| Votar (en eventos invitados) | ❌ | ❌ | ✅ |
+
+## Próximas fases (no implementadas aún)
+
+Ver spec §9. En orden: modo asíncrono + cron + emails Resend + PDF resumen + proxy voting (Fase 2), luego Quiz + Q&A + Heatmap (Fase 3), luego pulido con Framer Motion y accesibilidad (Fase 4).

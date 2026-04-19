@@ -11,7 +11,7 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("admin1234", 12);
+  const adminHash = await bcrypt.hash("admin1234", 12);
   await prisma.user.upsert({
     where: { email: "admin@example.local" },
     update: {},
@@ -19,11 +19,43 @@ async function main() {
       email: "admin@example.local",
       nombre: "Admin",
       rol: "ADMIN",
-      hashedPassword,
+      hashedPassword: adminHash,
       activado: true,
     },
   });
-  console.log("Seed OK: admin@example.local / admin1234");
+
+  const votanteHash = await bcrypt.hash("voto1234", 12);
+  await prisma.user.upsert({
+    where: { email: "voto1@example.local" },
+    update: {},
+    create: {
+      email: "voto1@example.local",
+      nombre: "Votante 1",
+      rol: "VOTANTE",
+      hashedPassword: votanteHash,
+      activado: true,
+    },
+  });
+
+  const reviewerHash = await bcrypt.hash("review1234", 12);
+  await prisma.user.upsert({
+    where: { email: "reviewer@example.local" },
+    update: {},
+    create: {
+      email: "reviewer@example.local",
+      nombre: "Reviewer",
+      rol: "REVIEWER",
+      hashedPassword: reviewerHash,
+      activado: true,
+    },
+  });
+
+  console.log(
+    "Seed OK:\n" +
+      "  admin@example.local / admin1234\n" +
+      "  voto1@example.local / voto1234\n" +
+      "  reviewer@example.local / review1234",
+  );
 }
 
 main().finally(() => prisma.$disconnect());
