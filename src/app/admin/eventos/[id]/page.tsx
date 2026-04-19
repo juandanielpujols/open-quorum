@@ -149,7 +149,13 @@ export default async function EventoDetallePage({
 
   async function onCrearPregunta(fd: FormData) {
     "use server";
-    const tipo = String(fd.get("tipo")) as "OPCION_MULTIPLE" | "SI_NO" | "ESCALA";
+    const tipo = String(fd.get("tipo")) as
+      | "OPCION_MULTIPLE"
+      | "SI_NO"
+      | "ESCALA"
+      | "RANKING"
+      | "NUBE_PALABRAS"
+      | "RESPUESTA_ABIERTA";
     const configRaw: Record<string, unknown> = {};
     if (tipo === "ESCALA") {
       configRaw.min = Number(fd.get("escalaMin") ?? 1);
@@ -159,6 +165,11 @@ export default async function EventoDetallePage({
     } else if (tipo === "OPCION_MULTIPLE") {
       configRaw.permitirMultiple = fd.get("permitirMultiple") === "on";
       configRaw.maxSelecciones = Number(fd.get("maxSelecciones") ?? 1);
+    } else if (tipo === "NUBE_PALABRAS") {
+      configRaw.palabrasPorVotante = Number(fd.get("palabrasPorVotante") ?? 3);
+      configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 30);
+    } else if (tipo === "RESPUESTA_ABIERTA") {
+      configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 500);
     }
     const opcionesRaw = String(fd.get("opciones") ?? "").split("\n").filter(Boolean);
     await crearPregunta({
@@ -181,7 +192,13 @@ export default async function EventoDetallePage({
   async function onActualizarPregunta(fd: FormData) {
     "use server";
     const pid = String(fd.get("pid"));
-    const tipo = String(fd.get("tipo")) as "OPCION_MULTIPLE" | "SI_NO" | "ESCALA";
+    const tipo = String(fd.get("tipo")) as
+      | "OPCION_MULTIPLE"
+      | "SI_NO"
+      | "ESCALA"
+      | "RANKING"
+      | "NUBE_PALABRAS"
+      | "RESPUESTA_ABIERTA";
     const configRaw: Record<string, unknown> = {};
     if (tipo === "ESCALA") {
       configRaw.min = Number(fd.get("escalaMin") ?? 1);
@@ -191,6 +208,11 @@ export default async function EventoDetallePage({
     } else if (tipo === "OPCION_MULTIPLE") {
       configRaw.permitirMultiple = fd.get("permitirMultiple") === "on";
       configRaw.maxSelecciones = Number(fd.get("maxSelecciones") ?? 1);
+    } else if (tipo === "NUBE_PALABRAS") {
+      configRaw.palabrasPorVotante = Number(fd.get("palabrasPorVotante") ?? 3);
+      configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 30);
+    } else if (tipo === "RESPUESTA_ABIERTA") {
+      configRaw.maxCaracteres = Number(fd.get("maxCaracteres") ?? 500);
     }
     const opcionesRaw = String(fd.get("opciones") ?? "")
       .split("\n")

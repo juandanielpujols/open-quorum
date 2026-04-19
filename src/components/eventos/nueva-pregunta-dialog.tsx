@@ -28,7 +28,9 @@ export function NuevaPreguntaDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [tipo, setTipo] = useState<"OPCION_MULTIPLE" | "SI_NO" | "ESCALA">("OPCION_MULTIPLE");
+  const [tipo, setTipo] = useState<
+    "OPCION_MULTIPLE" | "SI_NO" | "ESCALA" | "RANKING" | "NUBE_PALABRAS" | "RESPUESTA_ABIERTA"
+  >("OPCION_MULTIPLE");
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -90,6 +92,9 @@ export function NuevaPreguntaDialog({
                 <option value="OPCION_MULTIPLE">Opción múltiple</option>
                 <option value="SI_NO">Sí / No</option>
                 <option value="ESCALA">Escala 1-5</option>
+                <option value="RANKING">Ranking</option>
+                <option value="NUBE_PALABRAS">Nube de palabras</option>
+                <option value="RESPUESTA_ABIERTA">Respuesta abierta</option>
               </select>
             </div>
             <div className="space-y-1.5">
@@ -185,6 +190,68 @@ export function NuevaPreguntaDialog({
             <p className="rounded-md border border-brand-border bg-brand-cream px-3 py-2 text-xs text-brand-muted">
               Las opciones "Sí" y "No" se generan automáticamente.
             </p>
+          )}
+
+          {tipo === "RANKING" && (
+            <>
+              <div className="space-y-1.5">
+                <Label htmlFor="opciones" className={labelCls}>
+                  Opciones a rankear (una por línea)
+                </Label>
+                <textarea
+                  id="opciones"
+                  name="opciones"
+                  required
+                  placeholder="Prioridad A&#10;Prioridad B&#10;Prioridad C"
+                  rows={4}
+                  className={cn(fieldCls, "h-auto py-2 font-mono text-xs")}
+                />
+                <p className="text-[11px] text-brand-muted">
+                  Los votantes arrastran para ordenarlas de mayor a menor preferencia.
+                </p>
+              </div>
+            </>
+          )}
+
+          {tipo === "NUBE_PALABRAS" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className={cn(labelCls, "mb-1 block")}>Palabras por votante</Label>
+                <Input
+                  name="palabrasPorVotante"
+                  type="number"
+                  min={1}
+                  max={10}
+                  defaultValue={3}
+                  className={fieldCls}
+                />
+              </div>
+              <div>
+                <Label className={cn(labelCls, "mb-1 block")}>Máx. caracteres c/u</Label>
+                <Input
+                  name="maxCaracteres"
+                  type="number"
+                  min={5}
+                  max={60}
+                  defaultValue={30}
+                  className={fieldCls}
+                />
+              </div>
+            </div>
+          )}
+
+          {tipo === "RESPUESTA_ABIERTA" && (
+            <div className="space-y-1.5">
+              <Label className={cn(labelCls, "mb-1 block")}>Máx. caracteres por respuesta</Label>
+              <Input
+                name="maxCaracteres"
+                type="number"
+                min={50}
+                max={2000}
+                defaultValue={500}
+                className={fieldCls}
+              />
+            </div>
           )}
 
           <DialogFooter>

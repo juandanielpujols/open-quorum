@@ -6,7 +6,7 @@ import { REGISTRY_PREGUNTAS } from "@/components/preguntas";
 
 const crearSchema = z.object({
   eventoId: z.string(),
-  tipo: z.enum(["OPCION_MULTIPLE", "SI_NO", "ESCALA"]),
+  tipo: z.enum(["OPCION_MULTIPLE", "SI_NO", "ESCALA", "RANKING", "NUBE_PALABRAS", "RESPUESTA_ABIERTA"]),
   enunciado: z.string().min(1).max(500),
   descripcion: z.string().optional(),
   visibilidad: z.enum(["EN_VIVO", "OCULTO_HASTA_CERRAR"]).default("OCULTO_HASTA_CERRAR"),

@@ -24,6 +24,9 @@ export async function obtenerSnapshotEvento(eventoId: string) {
       if (p.tipo === "ESCALA") {
         const config = impl.schemaConfig.parse(p.configuracion) as never;
         agregado = (impl.agregar as (v: unknown, c: unknown) => unknown)(p.votos, config);
+      } else if (p.tipo === "NUBE_PALABRAS" || p.tipo === "RESPUESTA_ABIERTA") {
+        // Tipos que solo dependen de votos
+        agregado = (impl.agregar as (v: unknown) => unknown)(p.votos);
       } else {
         agregado = (impl.agregar as (v: unknown, o: unknown) => unknown)(p.votos, p.opciones);
       }
