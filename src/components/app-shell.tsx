@@ -3,6 +3,7 @@ import type { Rol } from "@/generated/prisma";
 import { auth } from "@/lib/auth";
 import { obtenerBranding } from "@/lib/branding";
 import { LogoutButton } from "@/components/logout-button";
+import { BrandMonogram } from "@/components/brand-mark";
 import {
   SidebarProvider,
   Sidebar,
@@ -62,36 +63,6 @@ const NAV_BY_ROLE: Record<Rol, NavGroup[]> = {
   ],
 };
 
-function MonogramSVG({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 120 48" className={className} role="img" aria-label="Monograma">
-      <text
-        x="0"
-        y="38"
-        fontFamily='"Crimson Pro", Georgia, serif'
-        fontWeight="600"
-        fontSize="42"
-        letterSpacing="-1.5"
-        fill="currentColor"
-      >
-        C
-      </text>
-      <polygon points="52,30 64,15 64,38" fill="currentColor" className="text-brand-crimson" />
-      <text
-        x="72"
-        y="38"
-        fontFamily='"Crimson Pro", Georgia, serif'
-        fontWeight="600"
-        fontSize="42"
-        letterSpacing="-1.5"
-        fill="currentColor"
-      >
-        R
-      </text>
-    </svg>
-  );
-}
-
 const ROLE_BADGE: Record<Rol, string> = {
   ADMIN: "Admin",
   REVIEWER: "Reviewer",
@@ -123,7 +94,7 @@ export async function AppShell({
                 className="h-8 w-auto max-w-[120px] object-contain group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:max-w-[24px]"
               />
             ) : (
-              <MonogramSVG className="h-7 w-auto text-brand-cream group-data-[collapsible=icon]:h-6" />
+              <BrandMonogram className="text-xl text-brand-cream group-data-[collapsible=icon]:text-lg" />
             )}
             <div className="flex flex-col leading-tight group-data-[collapsible=icon]:hidden">
               <span className="font-display text-base font-semibold text-brand-cream">

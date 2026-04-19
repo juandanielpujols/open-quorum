@@ -12,38 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { BrandWordmark, BrandMonogram } from "@/components/brand-mark";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Votaciones";
-
-function Monogram({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 160 64" className={className} role="img" aria-label="Monograma CGR">
-      <text
-        x="0"
-        y="50"
-        fontFamily='"Crimson Pro", Georgia, serif'
-        fontWeight="600"
-        fontSize="56"
-        letterSpacing="-2"
-        fill="currentColor"
-      >
-        C
-      </text>
-      <polygon points="72,40 88,20 88,48" fill="#C62828" />
-      <text
-        x="96"
-        y="50"
-        fontFamily='"Crimson Pro", Georgia, serif'
-        fontWeight="600"
-        fontSize="56"
-        letterSpacing="-2"
-        fill="currentColor"
-      >
-        R
-      </text>
-    </svg>
-  );
-}
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Open Quorum";
 
 const fieldBase =
   "h-12 w-full rounded-lg border-brand-border bg-brand-paper px-4 text-[15px] text-brand-ink placeholder:text-brand-muted/70 shadow-none transition-[border-color,box-shadow] duration-200 ease-out focus-visible:border-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy/15";
@@ -212,9 +183,9 @@ export default function LoginPage() {
         />
 
         <header className="relative cgr-reveal">
-          <Monogram className="h-14 w-auto text-brand-cream" />
+          <BrandWordmark className="text-[2.25rem] text-brand-cream" />
           <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.3em] text-brand-cream/70">
-            Sistema de Votaciones
+            Sistema de votaciones open-source
           </p>
         </header>
 
@@ -245,7 +216,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm cgr-reveal">
           {/* Monograma mobile */}
           <div className="mb-10 flex flex-col items-center lg:hidden">
-            <Monogram className="h-10 w-auto text-brand-navyDeep" />
+            <BrandMonogram className="text-2xl text-brand-ink" />
             <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.24em] text-brand-muted">
               {APP_NAME}
             </p>

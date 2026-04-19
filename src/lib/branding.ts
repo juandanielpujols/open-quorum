@@ -41,7 +41,7 @@ const SINGLETON_ID = "singleton";
 
 const BRANDING_DEFAULT = {
   id: SINGLETON_ID,
-  nombre: process.env.NEXT_PUBLIC_APP_NAME ?? "Votaciones",
+  nombre: process.env.NEXT_PUBLIC_APP_NAME ?? "Open Quorum",
   logoUrl: null as string | null,
   tema: "institucional",
   updatedBy: null as string | null,
@@ -83,7 +83,7 @@ export async function actualizarBranding(input: {
     where: { id: SINGLETON_ID },
     create: {
       id: SINGLETON_ID,
-      nombre: (data.nombre as string) ?? "Votaciones",
+      nombre: (data.nombre as string) ?? "Open Quorum",
       logoUrl: (data.logoUrl as string | null) ?? null,
       tema: (data.tema as string) ?? "institucional",
       updatedBy: input.updatedBy,

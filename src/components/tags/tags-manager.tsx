@@ -86,22 +86,22 @@ export function TagsManager({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleCreate} className="space-y-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_auto]">
-              <div className="space-y-1.5">
-                <Label htmlFor="nombre" className={labelCls}>
-                  Nombre
-                </Label>
-                <Input
-                  id="nombre"
-                  name="nombre"
-                  required
-                  placeholder="Ej: Elecciones 2026"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className={fieldCls}
-                />
-              </div>
-              <div className="space-y-1.5">
+            <div className="space-y-1.5">
+              <Label htmlFor="nombre" className={labelCls}>
+                Nombre
+              </Label>
+              <Input
+                id="nombre"
+                name="nombre"
+                required
+                placeholder="Ej: Elecciones 2026"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className={fieldCls}
+              />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
+              <div className="flex-1 space-y-1.5">
                 <Label htmlFor="color" className={labelCls}>
                   Color
                 </Label>
@@ -119,23 +119,18 @@ export function TagsManager({
                   </span>
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className={cn(labelCls, "invisible sm:visible")}>
-                  &nbsp;
-                </Label>
-                <Button
-                  type="submit"
-                  disabled={isCreating || !nombre.trim()}
-                  className="bg-brand-navy text-white hover:bg-brand-navy-deep"
-                >
-                  {isCreating ? (
-                    <Loader2 aria-hidden className="size-4 animate-spin" />
-                  ) : (
-                    <Plus aria-hidden className="size-4" />
-                  )}
-                  Crear
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                disabled={isCreating || !nombre.trim()}
+                className="h-10 bg-brand-navy text-white hover:bg-brand-navy-deep"
+              >
+                {isCreating ? (
+                  <Loader2 aria-hidden className="size-4 animate-spin" />
+                ) : (
+                  <Plus aria-hidden className="size-4" />
+                )}
+                Crear
+              </Button>
             </div>
 
             {/* Paleta sugerida */}

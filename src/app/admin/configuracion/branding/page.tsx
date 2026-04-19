@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Check, Image as ImageIcon, Palette as PaletteIcon } from "lucide-react";
+import { BrandMonogram } from "@/components/brand-mark";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +89,7 @@ export default async function BrandingPage() {
                     id="nombre"
                     name="nombre"
                     defaultValue={branding.nombre}
-                    placeholder="Votaciones"
+                    placeholder="Open Quorum"
                     className={fieldCls}
                   />
                 </div>
@@ -118,39 +119,11 @@ export default async function BrandingPage() {
                       className="h-8 w-auto max-w-[120px] object-contain"
                     />
                   ) : (
-                    <svg
-                      viewBox="0 0 120 48"
-                      className="h-7 w-auto text-brand-cream"
-                      aria-hidden
-                    >
-                      <text
-                        x="0"
-                        y="38"
-                        fontFamily='"Crimson Pro", Georgia, serif'
-                        fontWeight="600"
-                        fontSize="42"
-                        letterSpacing="-1.5"
-                        fill="currentColor"
-                      >
-                        C
-                      </text>
-                      <polygon points="52,30 64,15 64,38" fill="var(--brand-crimson)" />
-                      <text
-                        x="72"
-                        y="38"
-                        fontFamily='"Crimson Pro", Georgia, serif'
-                        fontWeight="600"
-                        fontSize="42"
-                        letterSpacing="-1.5"
-                        fill="currentColor"
-                      >
-                        R
-                      </text>
-                    </svg>
+                    <BrandMonogram className="text-xl text-brand-cream" />
                   )}
                   <div className="flex flex-col leading-tight">
                     <span className="font-display text-base font-semibold">
-                      {branding.nombre || "Votaciones"}
+                      {branding.nombre || "Open Quorum"}
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-cream/50">
                       Admin
