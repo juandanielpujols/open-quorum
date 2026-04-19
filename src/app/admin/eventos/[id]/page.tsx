@@ -1,6 +1,12 @@
 import Link from "next/link";
-import { obtenerEvento, activarEvento } from "@/server/eventos";
+import {
+  obtenerEvento,
+  activarEvento,
+  invitarUsuarios,
+  removerInvitacion,
+} from "@/server/eventos";
 import { crearPregunta, eliminarPregunta } from "@/server/preguntas";
+import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 
@@ -15,9 +21,33 @@ export default async function EventoDetallePage({
   const e = await obtenerEvento(id);
   if (!e) return notFound();
 
+  const invitadosIds = new Set(e.invitados.map((i) => i.userId));
+  const usuariosDisponibles = await prisma.user.findMany({
+    where: {
+      rol: "VOTANTE",
+      activado: true,
+      id: { notIn: Array.from(invitadosIds) },
+    },
+    orderBy: { nombre: "asc" },
+  });
+
   async function onActivar() {
     "use server";
     await activarEvento(id);
+    revalidatePath(`/admin/eventos/${id}`);
+  }
+
+  async function onInvitar(fd: FormData) {
+    "use server";
+    const ids = fd.getAll("userId").map(String).filter(Boolean);
+    if (ids.length === 0) return;
+    await invitarUsuarios(id, ids);
+    revalidatePath(`/admin/eventos/${id}`);
+  }
+
+  async function onDesinvitar(fd: FormData) {
+    "use server";
+    await removerInvitacion(id, String(fd.get("userId")));
     revalidatePath(`/admin/eventos/${id}`);
   }
 
@@ -144,6 +174,63 @@ export default async function EventoDetallePage({
             Agregar pregunta
           </button>
         </form>
+      </section>
+
+      <section className="bg-white rounded-xl border border-gray-100 p-4 mb-6">
+        <h2 className="font-semibold mb-3">
+          Invitados ({e.invitados.length})
+        </h2>
+
+        {e.invitados.length > 0 && (
+          <ul className="space-y-1 mb-4">
+            {e.invitados.map((i) => (
+              <li
+                key={i.userId}
+                className="flex items-center justify-between text-sm border-b border-gray-50 py-1 last:border-0"
+              >
+                <span>
+                  {i.user.nombre}{" "}
+                  <span className="text-sb-gris">· {i.user.email}</span>
+                </span>
+                <form action={onDesinvitar}>
+                  <input type="hidden" name="userId" value={i.userId} />
+                  <button className="text-sb-rojo text-xs">Quitar</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {usuariosDisponibles.length === 0 ? (
+          <p className="text-sb-gris text-sm">
+            No hay más votantes activados disponibles. Invita usuarios en{" "}
+            <Link href="/admin/usuarios" className="underline">
+              Usuarios
+            </Link>{" "}
+            primero.
+          </p>
+        ) : (
+          <form action={onInvitar} className="space-y-2">
+            <label className="block text-sm font-medium">
+              Invitar votantes (Cmd/Ctrl+click para seleccionar varios)
+            </label>
+            <select
+              name="userId"
+              multiple
+              size={Math.min(8, usuariosDisponibles.length)}
+              className="w-full border border-gray-200 rounded-lg p-2"
+            >
+              {usuariosDisponibles.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre} — {u.email}
+                </option>
+              ))}
+            </select>
+            <button className="bg-sb-azul text-white px-4 py-2 rounded-lg text-sm">
+              Invitar seleccionados
+            </button>
+          </form>
+        )}
       </section>
 
       <section>
