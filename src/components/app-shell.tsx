@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Rol } from "@/generated/prisma";
-import { auth, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { obtenerBranding } from "@/lib/branding";
+import { LogoutButton } from "@/components/logout-button";
 import {
   SidebarProvider,
   Sidebar,
@@ -23,7 +24,6 @@ import {
   Tag,
   ShieldCheck,
   Vote,
-  LogOut,
   Settings,
   Palette,
 } from "lucide-react";
@@ -111,11 +111,6 @@ export async function AppShell({
   const groups = NAV_BY_ROLE[rol];
   const branding = await obtenerBranding();
 
-  async function cerrarSesion() {
-    "use server";
-    await signOut({ redirectTo: "/login" });
-  }
-
   return (
     <SidebarProvider>
       <Sidebar collapsible="icon" className="border-r border-[var(--sidebar-border)]">
@@ -178,15 +173,7 @@ export async function AppShell({
                 {session.user.email}
               </p>
             </div>
-            <form action={cerrarSesion}>
-              <button
-                type="submit"
-                aria-label="Cerrar sesión"
-                className="inline-flex size-8 items-center justify-center rounded-md text-brand-cream/70 transition-colors hover:bg-[var(--sidebar-accent)] hover:text-brand-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-crimson"
-              >
-                <LogOut className="size-4" />
-              </button>
-            </form>
+            <LogoutButton />
           </div>
         </SidebarFooter>
       </Sidebar>
