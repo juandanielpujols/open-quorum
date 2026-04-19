@@ -35,7 +35,7 @@ export function ProjectorOpcionMultiple({
                 {e.votos} · {(e.pct * 100).toFixed(0)}%
               </span>
             </div>
-            <div className="h-8 bg-sb-grisFondo rounded-lg overflow-hidden">
+            <div className="h-8 bg-brand-border rounded-lg overflow-hidden">
               <div
                 className="h-full bg-sb-azul transition-all duration-500 ease-out"
                 style={{ width: `${(e.votos / max) * 100}%` }}

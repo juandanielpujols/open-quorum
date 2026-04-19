@@ -26,7 +26,7 @@ export default async function ReviewerEventoDetalle({
               </span>
             </div>
             {p.agregado != null ? (
-              <pre className="text-xs bg-sb-grisFondo rounded p-2 overflow-auto">
+              <pre className="text-xs bg-brand-border rounded p-2 overflow-auto">
                 {JSON.stringify(p.agregado, null, 2)}
               </pre>
             ) : null}

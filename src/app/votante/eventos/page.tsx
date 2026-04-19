@@ -24,7 +24,7 @@ export default async function EventosVotante() {
           <li key={i.eventoId}>
             <Link
               href={`/votante/votar/${i.eventoId}`}
-              className="block bg-white rounded-xl border border-gray-100 p-4 hover:bg-sb-fondoClaro"
+              className="block bg-white rounded-xl border border-gray-100 p-4 hover:bg-brand-cream"
             >
               <p className="font-medium text-sb-azul">{i.evento.nombre}</p>
               <p className="text-xs text-sb-gris">{i.evento.modo}</p>

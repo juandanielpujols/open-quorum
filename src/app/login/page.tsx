@@ -148,7 +148,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={!canSubmit}
-        className="group relative block w-full cursor-pointer overflow-hidden rounded-lg bg-brand-navy px-4 py-3.5 text-[15px] font-bold tracking-wide text-white transition-colors duration-200 ease-out hover:bg-brand-navyDeep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-crimson/50 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-cream disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand-navy"
+        className="group relative block w-full cursor-pointer overflow-hidden rounded-lg bg-brand-navy px-4 py-3.5 text-[15px] font-bold tracking-wide text-white transition-colors duration-200 ease-out hover:bg-brand-navy-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-crimson/50 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-cream disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand-navy"
       >
         {/* Acento crimson fijo al pie — sutil, siempre visible, se intensifica en hover */}
         <span
@@ -172,7 +172,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-brand-cream text-brand-body lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       {/* Panel izquierdo — institucional, solo desktop */}
-      <aside className="brand-grain relative hidden overflow-hidden bg-brand-navyDeep text-brand-cream lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="brand-grain relative hidden overflow-hidden bg-brand-navy-deep text-brand-cream lg:flex lg:flex-col lg:justify-between lg:p-12">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-navy/40 blur-3xl"
@@ -237,9 +237,9 @@ export default function LoginPage() {
                 aria-hidden
                 className="space-y-5"
               >
-                <div className="h-[60px] rounded-lg bg-brand-creamDeep/60" />
-                <div className="h-[60px] rounded-lg bg-brand-creamDeep/60" />
-                <div className="h-[54px] rounded-lg bg-brand-creamDeep/60" />
+                <div className="h-[60px] rounded-lg bg-brand-cream-deep/60" />
+                <div className="h-[60px] rounded-lg bg-brand-cream-deep/60" />
+                <div className="h-[54px] rounded-lg bg-brand-cream-deep/60" />
               </div>
             }
           >

@@ -57,7 +57,7 @@ export default async function UsuariosPage() {
       </section>
 
       <table className="w-full text-sm border-collapse bg-white rounded-xl overflow-hidden">
-        <thead className="text-left text-sb-gris bg-sb-grisFondo">
+        <thead className="text-left text-sb-gris bg-brand-border">
           <tr>
             <th className="p-2">Email</th>
             <th className="p-2">Nombre</th>
@@ -75,7 +75,7 @@ export default async function UsuariosPage() {
                 {u.activado ? (
                   <span className="text-sb-verde">✓ Activado</span>
                 ) : (
-                  <code className="text-xs bg-sb-fondoClaro px-1.5 py-0.5 rounded">
+                  <code className="text-xs bg-brand-cream px-1.5 py-0.5 rounded">
                     /activar?t={u.tokenActivacion}
                   </code>
                 )}
