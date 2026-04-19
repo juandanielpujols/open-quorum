@@ -5,6 +5,94 @@ orden cronológico inverso (más reciente primero).
 
 ---
 
+## 2026-04-19 · Fase 2 — SSO, tipos de pregunta, async, PDF, email, poderes
+
+Ola grande de features post-seguridad. Usuario dio autonomía completa
+("haz todo lo que quieras en este folder sin preguntarme"), así que
+trabajé en batch y empujé al final.
+
+### Proveedores de identidad (SSO / OIDC)
+- Nuevo modelo `AuthProvider` en Prisma: `tipo` (GOOGLE/MICROSOFT/
+  GENERIC_OIDC), `issuer`, `clientId`, `clientSecretEnc` (cifrado
+  at-rest), `tenantId`, `hostedDomain`, `rolDefault`, `habilitado`.
+- `lib/crypto.ts` AES-256-GCM con HKDF-SHA256 derivado de `AUTH_SECRET`.
+  Formato `iv:ct+tag` base64. Helper `enmascarar()` para mostrar secrets
+  sin revelarlos en UI.
+- `auth.ts` ahora es **async factory** — `NextAuth(async () => ({...}))`
+  carga providers dinámicamente desde DB en cada startup. Providers
+  deshabilitados no se inyectan.
+- Callback `signIn`: primera vez que un usuario SSO entra, lo crea con
+  `rol = provider.rolDefault`. Password null (no aplica para SSO).
+- UI en `/admin/configuracion/providers` con CRUD completo, toggle
+  enable/disable, y hint con redirect URI exacta por tipo.
+- Login page `/login` detecta providers habilitados y muestra botones
+  SSO arriba del form de credenciales. Client component dedicado
+  (`providers-buttons.tsx`) para el `signIn(providerId)`.
+
+### 3 tipos de pregunta nuevos (total 6)
+- **Ranking**: drag-and-drop con `@dnd-kit`. Agregación por puntaje
+  posicional (N-i). Top ítem gana más puntos. Render con barras.
+- **Nube de palabras**: tokenización lowercase, stopwords es/en,
+  frequency count, top N renderizados con tamaño proporcional al count.
+- **Respuesta abierta**: texto libre, cap 500 chars, render como
+  quotes tipográficas en proyección.
+- Cada tipo sigue el contrato `REGISTRY_PREGUNTAS`: `schemaRespuesta`,
+  `schemaConfig`, `Voter`, `Projector`, `agregar`. Sin tocar código
+  core para agregar nuevos.
+
+### Modo asíncrono + cron
+- Eventos con `modo=ASINCRONO` y `cierreAt` configurable.
+- Endpoint `/api/cron/cerrar-vencidos` (POST, protected by
+  `CRON_SECRET` header) itera eventos activos con `cierreAt` pasado y
+  los cierra transaccionalmente.
+- Integrable con cron-job.org, GitHub Actions schedule, o Vercel Cron.
+
+### PDF de resumen
+- `lib/pdf/resumen-evento.tsx` usa `@react-pdf/renderer` server-side.
+- A4 con masthead, metadata, secciones por pregunta, agregación
+  renderizada por tipo (barras, histogramas, quotes, word list con
+  counts).
+- Endpoint `/api/eventos/[id]/resumen-pdf` stream Node Readable →
+  Response. Runtime `nodejs` (no edge, renderToStream no corre ahí).
+- Audit log `branding.actualizar` con `op: pdf_resumen_generado`.
+
+### Email (Resend)
+- `lib/email.ts` scaffold con lazy import de `resend` (no se carga si
+  `RESEND_API_KEY` falta — útil dev/tests).
+- Dry-run silencioso cuando sin API key; todo se loggea en `EmailLog`
+  para auditar incluso sin envío real.
+- 4 templates HTML responsive: `activacion`, `evento.abierto`,
+  `evento.recordatorio`, `evento.finalizado`. Wrapper común con
+  branding y footer.
+- Fallos de envío NO propagan al caller — un email caído no rompe un
+  signup.
+
+### Voto por representación (poderes)
+- Nuevo modelo `Poder`: `grantorId`, `proxyId`, `eventoId` (nullable =
+  global), `otorgadoAt`, `revocadoAt`.
+- `server/votos.ts` `registrarVoto` ahora:
+  1. Registra el voto directo del usuario (upsert manual por compound
+     unique con `representandoA: null`).
+  2. **Grantor trumps proxy**: `deleteMany` donde `representandoA=userId`
+     — si el grantor vota directo, borra cualquier voto por poder
+     emitido antes en su nombre.
+  3. **Replicación por poder**: busca grantors activos donde el user es
+     proxy (global o específico del evento), y upsert voto con
+     `emitidoVia=PODER, representandoA=grantorId` por cada grantor que
+     no haya votado directamente.
+- UI `/votante/poderes`: form para otorgar (selector de proxy +
+  alcance global/evento específico), lista de otorgados con revoke
+  inline, lista de poderes recibidos.
+- Invariante "el voto directo del grantor siempre prevalece" se
+  mantiene aunque el proxy vote primero, porque cualquier voto
+  subsecuente del grantor elimina el voto por poder.
+
+### Journal & push
+- Todo empujado a `origin/main` vía SSH (usuario revocó el PAT que
+  pegó en chat, ahora solo claves).
+
+---
+
 ## 2026-04-19 · Security hardening pass
 
 Aplicación sistemática de defensa en profundidad. El usuario es
@@ -292,3 +380,25 @@ Appendear acá cuando se aprenda algo que sirva para futuras sesiones.
 10. **Macos artifacts `"filename 2.ext"`** aparecen tras checkouts o
     copies, rompen type-check Next porque duplican declarations. Purgar
     con `find . -type f -name "* 2.*" -delete` antes de build.
+
+11. **otplib v13 cambió API**: no más `authenticator` object. Usar
+    named exports `generateSecret`, `generate`, `verify`, `generateURI`.
+    `verify()` ahora retorna `Promise<{ valid: boolean }>` — hay que
+    await y leer `.valid`.
+
+12. **NextAuth async config + Next 16 proxy.ts**: si `NextAuth()` recibe
+    un factory async, exportar `proxy.ts` como plain `async function
+    proxy(req)` (no `auth((req) => ...)` wrapper, porque el handler del
+    wrapper se resuelve a Promise que proxy no acepta como default
+    export). Llamar `await auth()` adentro cuando necesites la sesión.
+
+13. **@react-pdf/renderer requiere runtime `nodejs`** — no Edge. En
+    route handlers agregar `export const runtime = "nodejs"` explícito.
+    Stream es Node Readable; castear como `BodyInit` para el Response
+    de Next.
+
+14. **Proxy voting — invariante grantor-trumps**: en cada voto directo
+    de un grantor, `deleteMany` votos con `representandoA=grantorId`
+    ANTES de continuar. Así si el proxy votó primero y luego el
+    grantor vota, el voto del grantor pisa. Sin esto, el orden de
+    escritura define el resultado y rompe la intuición legal.
